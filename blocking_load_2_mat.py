@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Old mesh_size = 0.003 was changed to 0.01
+# Blocking load implementation
 def parse():
 	import argparse
 	parser = argparse.ArgumentParser()
