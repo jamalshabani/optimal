@@ -145,13 +145,23 @@ def sigma_r(u, Id):
 # Define test function and beam displacement
 v = TestFunction(VV)
 u = Function(VV)
+w = Function(VV)
 p = Function(VV)
 
 # The left side of the beam is clamped
 bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
-func1 = inner(f, u) * ds(8)
+# Solve for w
+# Define the weak form
+a_forward_w_s = h_s(rho) * inner(sigma_s(w, Id), epsilon(v)) * dx
+a_forward_w_r = h_r(rho) * inner(sigma_r(w, Id), epsilon(v)) * dx
+a_forward_w = a_forward_w_s + a_forward_w_r
+
+L_forward_w = inner(f, v) * ds(8)
+R_fwd_w = a_forward_w - L_forward_w
+
+func1 = 1 + inner(f, u) * ds(8)/assemble(inner(f, w) * dx)
 func2 = kappa_d_e * W(rho) * dx
 
 func3_sub1 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
@@ -213,6 +223,9 @@ def FormObjectiveGradient(tao, x, G):
 
 	# Solve forward PDE
 	solve(R_fwd == 0, u, bcs = bcs)
+
+	# Solve forward PDE for u_0
+	solve(R_fwd_w == 0, w, bcs = bcs)
 
 	# Solve adjoint PDE
 	solve(R_adj == 0, p, bcs = bcs)
