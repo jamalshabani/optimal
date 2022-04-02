@@ -126,6 +126,11 @@ def h_r(rho):
 def W(rho):
 	return rho * (1 - rho)
 
+def c_0_w(f, w):
+	haha = assemble(inner(f, w) * ds(8))
+	print(w)
+	print(haha)
+
 # Define stress and strain tensors
 def epsilon(u):
 	return 0.5 * (grad(u) + grad(u).T)
@@ -145,23 +150,26 @@ def sigma_r(u, Id):
 # Define test function and beam displacement
 v = TestFunction(VV)
 u = Function(VV)
-w = Function(VV)
+u0 = Function(VV)
 p = Function(VV)
 
 # The left side of the beam is clamped
 bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
+# Solve for u0
+# Define the weak form for u0
+a_forward_u0_s = h_s(rho) * inner(sigma_s(u0, Id), epsilon(v)) * dx
+a_forward_u0_r = h_r(rho) * inner(sigma_r(u0, Id), epsilon(v)) * dx
+a_forward_u0 = a_forward_u0_s + a_forward_u0_r
+
+L_forward_u0 = inner(f, v) * ds(8)
+R_fwd_u0 = a_forward_u0 - L_forward_u0
+
+# Solve forward PDE for u_0
+solve(R_fwd_u0 == 0, u0, bcs = bcs)
+
 # Define the objective function
-# Solve for w
-# Define the weak form
-a_forward_w_s = h_s(rho) * inner(sigma_s(w, Id), epsilon(v)) * dx
-a_forward_w_r = h_r(rho) * inner(sigma_r(w, Id), epsilon(v)) * dx
-a_forward_w = a_forward_w_s + a_forward_w_r
-
-L_forward_w = inner(f, v) * ds(8)
-R_fwd_w = a_forward_w - L_forward_w
-
-func1 = 1 + inner(f, u) * ds(8)/assemble(inner(f, w) * dx)
+func1 = 1 / assemble(inner(f, u0) * ds(8)) * inner(f, u) * ds(8)
 func2 = kappa_d_e * W(rho) * dx
 
 func3_sub1 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
@@ -195,14 +203,14 @@ a_adjoint_s = h_s(rho) * inner(sigma_s(v, Id), epsilon(p)) * dx
 a_adjoint_r = h_r(rho) * inner(sigma_r(v, Id), epsilon(p)) * dx
 a_adjoint = a_adjoint_s + a_adjoint_r
 
-L_adjoint = inner(f, v) * ds(8)
+L_adjoint = 1 / assemble(inner(f, u0) * ds(8)) * inner(f, v) * ds(8)
 R_adj = a_adjoint + L_adjoint
 
 
 def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
-	if (i%10) == 0:
+	if (i % 10) == 0:
 		File(options.output + '/rho-{}.pvd'.format(i)).write(rho)
 
 	if (options.mesh == '1_to_3_mesh.msh'):
@@ -214,9 +222,6 @@ def FormObjectiveGradient(tao, x, G):
 
 	print("The volume fraction(Vr) is {}".format(volume_fraction))
 
-	# if (abs(volume_fraction - volume_fraction_0) < volume_tol):
-	# 	tao.setConvergedReason(8)
-
 	with rho.dat.vec as rho_vec:
 		rho_vec.set(0.0)
 		rho_vec.axpy(1.0, x)
@@ -225,7 +230,7 @@ def FormObjectiveGradient(tao, x, G):
 	solve(R_fwd == 0, u, bcs = bcs)
 
 	# Solve forward PDE for u_0
-	solve(R_fwd_w == 0, w, bcs = bcs)
+	solve(R_fwd_u0 == 0, u0, bcs = bcs)
 
 	# Solve adjoint PDE
 	solve(R_adj == 0, p, bcs = bcs)
@@ -235,7 +240,7 @@ def FormObjectiveGradient(tao, x, G):
 		G.set(0.0)
 		G.axpy(1.0, dJdrho_vec)
 
-	f_val = assemble(J)
+	f_val = assemble(J) + 1.0
 	return f_val
 
 # Setting lower and upper bounds
