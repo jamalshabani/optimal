@@ -75,7 +75,7 @@ for i in range(len(r)):
 
 rho = Function(V)
 rho.dat.data[:] = rho_array
-rho = Constant(0.4)
+# rho = Constant(0.4)
 rho = interpolate(rho, V)
 File(options.output + '/rho_initial.pvd').write(rho)
 ###### End Initial Design #####

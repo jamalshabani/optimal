@@ -88,18 +88,22 @@ File("output4/rho_initial.pvd").write(rho_initial)
 ###### End Initial Design #####
 
 # Define the constant parameters used in the problem
-c = 1.0e-2
+kappa = 1.0e-2
+cw = pi/8  # Normalization parameter
 lagrange_v = 1.0e-8
-lagrange_s = 5.0
-lagrange_r = 0.5
+lagrange_r1 = 5.0
+lagrange_r2 = 0.5
 
 delta = 1.0e-3
 epsilon = 5.0e-3
 
-c_d_e = c / epsilon
-c_m_e = c * epsilon
+kappa_d_e = kappa / (epsilon * cw)
+kappa_m_e = kappa * epsilon / cw
 
-f = Constant((0, -1))
+f = Constant((0, -2))
+
+e1 = as_vector((1, 0))
+e2 = as_vector((0, 1))
 
 # Young's modulus of the beam and poisson ratio
 E_v = delta
@@ -145,6 +149,12 @@ def W(rho):
 def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
+# Residual strain
+epsilon_star =  -1 * outer(e1, e1) + outer(e2, e2)
+
+# Residual strain
+epsilon_star =  -1 * outer(e1, e1) + outer(e2, e2)
+
 def sigma_v(u, Id):
     return lambda_v * tr(epsilon(u)) * Id + 2 * mu_v * epsilon(u)
 
@@ -163,16 +173,16 @@ bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
 func1 = inner(f, u) * ds(8)
-func2 = c_d_e * W(rho) * dx
+func2 = kappa_d_e * W(rho) * dx
 
 func3_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func3_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func3_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 
-func3 = c_m_e * 0.5 * (func3_sub1 + func3_sub2 + func3_sub3)
+func3 = kappa_m_e * (func3_sub1 + func3_sub2 + func3_sub3)
 func4 = lagrange_v * v_v(rho) * dx  # Void material
-func5 = lagrange_s * v_s(rho) * dx  # Structural material
-func6 = lagrange_r * v_r(rho) * dx  # Responsive material
+func5 = lagrange_r1 * v_s(rho) * dx  # Structural material
+func6 = lagrange_r2 * v_r(rho) * dx  # Responsive material
 
 J = func1 + func2 + func3 + func4 + func5 + func6
 
@@ -187,9 +197,9 @@ R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
 a_lagrange_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(u)) * dx
-a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(u)) * dx
-a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(u)) * dx
-a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
+a_lagrange_r1 = h_s(rho) * inner(sigma_s(u, Id), epsilon(u)) * dx
+a_lagrange_r2 = h_r(rho) * inner(sigma_r(u, Id), epsilon(u)) * dx
+a_lagrange   = a_lagrange_v + a_lagrange_r1 + a_lagrange_r2
 
 L_lagrange = inner(f, u) * ds(8)
 R_lagrange = a_lagrange - L_lagrange
