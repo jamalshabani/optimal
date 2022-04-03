@@ -23,6 +23,7 @@ from firedrake import *
 from petsc4py import PETSc
 import time
 import numpy as np
+import initial_designs
 
 start = time.time()
 
@@ -35,48 +36,14 @@ V = FunctionSpace(mesh, 'CG', 1)
 VV = VectorFunctionSpace(mesh, 'CG', 1)
 
 # Initial Design
-mesh_coordinates = mesh.coordinates.dat.data[:]
+###### Begin Initial Design #####
+if (options.mesh == '1_to_1_mesh.msh'):
+	rho = initial_designs.create_initial_design_1_to_1(mesh, V)
+elif (options.mesh == '1_to_3_mesh.msh'):
+	rho = initial_designs.create_initial_design_1_to_3(mesh, V)
+else:
+	rho = initial_designs.create_initial_design_1_to_6(mesh, V)
 
-# Define the points
-r1 = [[0.1, 0], [0.3, 0], [0.5, 0], [0.7, 0], [0.9, 0]]
-
-r2 = [[0, 1/12], [0.2, 1/12], [0.4, 1/12], [0.6, 1/12], [0.8, 1/12], [1.0, 1/12]]
-
-r3 = [[0.1, 2/12], [0.3, 2/12], [0.5, 2/12], [0.7, 2/12], [0.9, 2/12]]
-
-r4 = [[0, 3/12], [0.2, 3/12], [0.4, 3/12], [0.6, 3/12], [0.8, 3/12], [1.0, 3/12]]
-
-r5 = [[0.1, 4/12], [0.3, 4/12], [0.5, 4/12], [0.7, 4/12], [0.9, 4/12]]
-
-r = r1 + r2 + r3 + r4 + r5
-
-def dist(x, y, a, b):
-	return sqrt((x - a)**2 + (y - b)**2)
-
-def g(s):
-	if (s < 0.04):
-		return 1
-	if (0.04 < s < 0.05):
-		return (cos((s - 0.04)*pi/0.01) + 1)/2
-	if (s > 0.05):
-		return 0
-
-M = len(mesh_coordinates)
-
-rho_array = np.zeros(M)
-
-for i in range(len(r)):
-	for j in range(M):
-		x = mesh_coordinates[j][0]
-		y = mesh_coordinates[j][1]
-		temp = g(dist(x, y, r[i][0], r[i][1]))
-		if (temp > 0):
-			rho_array[j] = temp
-
-rho = Function(V)
-rho.dat.data[:] = rho_array
-# rho = Constant(0.4)
-rho = interpolate(rho, V)
 File(options.output + '/rho_initial.pvd').write(rho)
 ###### End Initial Design #####
 
