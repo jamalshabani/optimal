@@ -43,7 +43,7 @@ def create_initial_design_1_to_3(mesh, V):
 			if (temp > 0):
 				rho_array[j] = temp
 
-	rho = Function(V, name = "Initial design")
+	rho = Function(V)
 	rho.dat.data[:] = rho_array
 	rho = interpolate(rho, V)
 
@@ -103,8 +103,9 @@ def create_initial_design_1_to_1(mesh, V):
 			if (temp > 0):
 				rho_array[j] = temp
 
-	rho = Function(V, name = "Initial design")
+	rho = Function(V)
 	rho.dat.data[:] = rho_array
+	# rho = Constant(0.4)
 	rho = interpolate(rho, V)
 
 	return rho
@@ -116,15 +117,15 @@ def create_initial_design_1_to_6(mesh, V):
 
 	# Include initial designs files. 3 different initial designs
 	# Define the points
-	r1 = [[0.1, 0], [0.3, 0], [0.5, 0], [0.7, 0], [0.9, 0]]
+	r1 = [[0, 0], [0.2, 0], [0.4, 0], [0.6, 0], [0.8, 0], [1.0, 0]]
 
-	r2 = [[0, 1/24], [0.2, 1/24], [0.4, 1/24], [0.6, 1/24], [0.8, 1/24], [1.0, 1/24]]
+	r2 = [[0.1, 1/24], [0.3, 1/24], [0.5, 1/24], [0.7, 1/24], [0.9, 1/24]]
 
-	r3 = [[0.1, 2/24], [0.3, 2/24], [0.5, 2/24], [0.7, 2/24], [0.9, 2/24]]
+	r3 = [[0, 2/24], [0.2, 2/24], [0.4, 2/24], [0.6, 2/24], [0.8, 2/24], [1.0, 2/24]]
 
-	r4 = [[0, 3/24], [0.2, 3/24], [0.4, 3/24], [0.6, 3/24], [0.8, 3/24], [1.0, 3/24]]
+	r4 = [[0.1, 3/24], [0.3, 3/24], [0.5, 3/24], [0.7, 3/24], [0.9, 3/24]]
 
-	r5 = [[0.1, 4/24], [0.3, 4/24], [0.5, 4/24], [0.7, 4/24], [0.9, 4/24]]
+	r5 = [[0, 4/24], [0.2, 4/24], [0.4, 4/24], [0.6, 4/24], [0.8, 4/24], [1.0, 4/24]]
 
 	r = r1 + r2 + r3 + r4 + r5
 
@@ -132,11 +133,11 @@ def create_initial_design_1_to_6(mesh, V):
 		return sqrt((x - a)**2 + (y - b)**2)
 
 	def g(s):
-		if (s < 0.025):
+		if (s < 0.03):
 			return 1
-		if (0.025 < s < 0.035):
-			return (cos((s - 0.025)*pi/0.01) + 1)/2
-		if (s > 0.035):
+		if (0.03 < s < 0.04):
+			return (cos((s - 0.03)*pi/0.01) + 1)/2
+		if (s > 0.04):
 			return 0
 
 	M = len(mesh_coordinates)
@@ -151,7 +152,7 @@ def create_initial_design_1_to_6(mesh, V):
 			if (temp > 0):
 				rho_array[j] = temp
 
-	rho = Function(V, name = "Initial design")
+	rho = Function(V)
 	rho.dat.data[:] = rho_array
 	rho = interpolate(rho, V)
 

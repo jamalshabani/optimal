@@ -90,9 +90,9 @@ File("output4/rho_initial.pvd").write(rho_initial)
 # Define the constant parameters used in the problem
 kappa = 1.0e-2
 cw = pi/8  # Normalization parameter
-lagrange_v = 1.0e-8
-lagrange_r1 = 5.0
-lagrange_r2 = 0.5
+# lagrange_v = 1.0e-8
+lagrange_r1 = 2.0
+# lagrange_r2 = 0.5
 
 delta = 1.0e-3
 epsilon = 5.0e-3
@@ -107,26 +107,26 @@ e2 = as_vector((0, 1))
 
 # Young's modulus of the beam and poisson ratio
 E_v = delta
-E_s = 1.5
-E_r = 1.0e-1
+E_r1 = 1.0
+E_r2 = 1.0e-1
 nu = 0.3 #nu poisson ratio
 
 mu_v = E_v/(2 * (1 + nu))
 lambda_v = (E_v * nu)/((1 + nu) * (1 - 2 * nu))
 
-mu_s = E_s/(2 * (1 + nu))
-lambda_s = (E_s * nu)/((1 + nu) * (1 - 2 * nu))
+mu_r1 = E_r1/(2 * (1 + nu))
+lambda_r1 = (E_r1 * nu)/((1 + nu) * (1 - 2 * nu))
 
-mu_r = E_r/(2 * (1 + nu))
-lambda_r = (E_r * nu)/((1 + nu) * (1 - 2 * nu))
+mu_r2 = E_r2/(2 * (1 + nu))
+lambda_r2 = (E_r2 * nu)/((1 + nu) * (1 - 2 * nu))
 
 def v_v(rho):
 	return 1 - rho.sub(0) - rho.sub(1)
 
-def v_s(rho):
+def v_r1(rho):
 	return rho.sub(0)
 
-def v_r(rho):
+def v_r2(rho):
 	return rho.sub(1)
 
 # Define h(x)=x^2
@@ -134,11 +134,11 @@ def h_v(rho):
 	return (1 - rho.sub(0) - rho.sub(1))**2
 
 # Define h(x)=x^2
-def h_s(rho):
+def h_r1(rho):
 	return (rho.sub(0))**2
 
 # Define h(x)=x^2
-def h_r(rho):
+def h_r2(rho):
 	return (rho.sub(1))**2
 
 # Define W(x) function
@@ -149,24 +149,29 @@ def W(rho):
 def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
-# Residual strain
-epsilon_star =  -1 * outer(e1, e1) + outer(e2, e2)
+# Residual strains
+epsilon_star_1 =  outer(e1, e1) + outer(e2, e2)
+epsilon_star_2 =  -1 * outer(e1, e1) + -1 * outer(e2, e2)
 
-# Residual strain
-epsilon_star =  -1 * outer(e1, e1) + outer(e2, e2)
+def sigma_star_1(Id):
+	return lambda_r1 * tr(epsilon_star_1) * Id + 2 * mu_r1 * epsilon_star_1
+
+def sigma_star_2(Id):
+	return lambda_r2 * tr(epsilon_star_2) * Id + 2 * mu_r2 * epsilon_star_2
 
 def sigma_v(u, Id):
     return lambda_v * tr(epsilon(u)) * Id + 2 * mu_v * epsilon(u)
 
-def sigma_s(u, Id):
-    return lambda_s * tr(epsilon(u)) * Id + 2 * mu_s * epsilon(u)
+def sigma_r1(u, Id):
+    return lambda_r1 * tr(epsilon(u)) * Id + 2 * mu_r1 * epsilon(u)
 
-def sigma_r(u, Id):
-    return lambda_r * tr(epsilon(u)) * Id + 2 * mu_r * epsilon(u)
+def sigma_r2(u, Id):
+    return lambda_r2 * tr(epsilon(u)) * Id + 2 * mu_r2 * epsilon(u)
 
 # Define test function and beam displacement
 v = TestFunction(VV)
 u = Function(VV)
+p = Function(VV)
 
 # The left side of the beam is clamped
 bcs = DirichletBC(VV, Constant((0, 0)), 7)
@@ -176,40 +181,54 @@ func1 = inner(f, u) * ds(8)
 func2 = kappa_d_e * W(rho) * dx
 
 func3_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
-func3_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
-func3_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
+func3_sub2 = inner(grad(v_r1(rho)), grad(v_r1(rho))) * dx
+func3_sub3 = inner(grad(v_r2(rho)), grad(v_r2(rho))) * dx
 
 func3 = kappa_m_e * (func3_sub1 + func3_sub2 + func3_sub3)
-func4 = lagrange_v * v_v(rho) * dx  # Void material
-func5 = lagrange_r1 * v_s(rho) * dx  # Structural material
-func6 = lagrange_r2 * v_r(rho) * dx  # Responsive material
+# func4 = lagrange_v * v_v(rho) * dx  # Void material
+func5 = lagrange_r1 * v_r1(rho) * dx  # Structural material
+# func6 = lagrange_r2 * v_r2(rho) * dx  # Responsive material
 
-J = func1 + func2 + func3 + func4 + func5 + func6
+J = func1 + func2 + func3 + func5
 
 # Define the weak form for forward PDE
 a_forward_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(v)) * dx
-a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
-a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
-a_forward = a_forward_v + a_forward_s + a_forward_r
+a_forward_r1 = h_r1(rho) * inner(sigma_r1(u, Id), epsilon(v)) * dx
+a_forward_r2 = h_r2(rho) * inner(sigma_r2(u, Id), epsilon(v)) * dx
+a_forward = a_forward_v + a_forward_r1 + a_forward_r2
 
-L_forward = inner(f, v) * ds(8)
+L_forward_r1 = h_r1(rho) * inner(sigma_star_1(Id), epsilon(v)) * dx
+L_forward_r2 = h_r2(rho) * inner(sigma_star_2(Id), epsilon(v)) * dx
+L_forward = L_forward_r1 +  L_forward_r2
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
-a_lagrange_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(u)) * dx
-a_lagrange_r1 = h_s(rho) * inner(sigma_s(u, Id), epsilon(u)) * dx
-a_lagrange_r2 = h_r(rho) * inner(sigma_r(u, Id), epsilon(u)) * dx
+a_lagrange_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(p)) * dx
+a_lagrange_r1 = h_r1(rho) * inner(sigma_r1(u, Id), epsilon(p)) * dx
+a_lagrange_r2 = h_r2(rho) * inner(sigma_r2(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_r1 + a_lagrange_r2
 
-L_lagrange = inner(f, u) * ds(8)
+L_lagrange_r1 = h_r1(rho) * inner(sigma_star_1(Id), epsilon(p)) * dx
+L_lagrange_r2 = h_r2(rho) * inner(sigma_star_2(Id), epsilon(p)) * dx
+L_lagrange = L_lagrange_r1 + L_lagrange_r2
 R_lagrange = a_lagrange - L_lagrange
-L = J - R_lagrange
+L = J + R_lagrange
+
+
+# Define the weak form for adjoint PDE
+a_adjoint_v = h_v(rho) * inner(sigma_v(v, Id), epsilon(p)) * dx
+a_adjoint_r1 = h_r1(rho) * inner(sigma_r1(v, Id), epsilon(p)) * dx
+a_adjoint_r2 = h_r2(rho) * inner(sigma_r2(v, Id), epsilon(p)) * dx
+a_adjoint = a_adjoint_v + a_adjoint_r1 + a_adjoint_r2
+
+L_adjoint = inner(f, v) * ds(8)
+R_adj = a_adjoint + L_adjoint
 
 
 def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
-	if (i%50) == 0:
+	if (i%10) == 0:
 		rho_i = Function(V)
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
@@ -220,13 +239,16 @@ def FormObjectiveGradient(tao, x, G):
 		rho_vec.axpy(1.0, x)
 
 	volume = assemble(rho.sub(0) * dx) * 3
-	print("The volume fraction(Vs) is {}".format(volume))
+	print("The volume fraction(Vr1) is {}".format(volume))
 
 	volume = assemble(rho.sub(1) * dx) * 3
-	print("The volume fraction(Vr) is {}".format(volume))
+	print("The volume fraction(Vr2) is {}".format(volume))
 
 	# Solve forward PDE
 	solve(R_fwd == 0, u, bcs = bcs)
+
+	# Solve adjoint PDE
+	solve(R_adj == 0, p, bcs = bcs)
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
@@ -266,7 +288,7 @@ with ub.dat.vec as ub_vec:
 tao = PETSc.TAO().create(PETSc.COMM_SELF)
 tao.setType('bncg')
 # tao.setType('blmvm')
-tao.setObjectiveGradient(FormObjectiveGradient)
+tao.setObjectiveGradient(FormObjectiveGradient, None)
 tao.setVariableBounds(rho_lb, rho_ub)
 tao.setFromOptions()
 
