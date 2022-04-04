@@ -43,7 +43,7 @@ def create_initial_design_1_to_3(mesh, V):
 			if (temp > 0):
 				rho_array[j] = temp
 
-	rho = Function(V)
+	rho = Function(V, name = "Initial design")
 	rho.dat.data[:] = rho_array
 	rho = interpolate(rho, V)
 
@@ -103,7 +103,7 @@ def create_initial_design_1_to_1(mesh, V):
 			if (temp > 0):
 				rho_array[j] = temp
 
-	rho = Function(V)
+	rho = Function(V, name = "Initial design")
 	rho.dat.data[:] = rho_array
 	rho = interpolate(rho, V)
 
@@ -151,7 +151,7 @@ def create_initial_design_1_to_6(mesh, V):
 			if (temp > 0):
 				rho_array[j] = temp
 
-	rho = Function(V)
+	rho = Function(V, name = "Initial design")
 	rho.dat.data[:] = rho_array
 	rho = interpolate(rho, V)
 
