@@ -37,17 +37,23 @@ VV = VectorFunctionSpace(mesh, 'CG', 1, dim = 2)
 mesh_coordinates = mesh.coordinates.dat.data[:]
 
 # Define the points
-v1 = [[0.1, 1/12], [0.3, 1/12], [0.5, 1/12], [0.7, 1/12], [0.9, 1/12]]
-r1 = [[0.2, 1/12], [0.4, 1/12], [0.6, 1/12], [0.8, 1/12]]
+v0 = [[0, 0], [0.2, 0], [0.4, 0], [0.6, 0], [0.8, 0], [1.0, 0]]
+r0 = [[0.1, 0], [0.3, 0], [0.5, 0], [0.7, 0], [0.9, 0]]
 
-v2 = [[0.2, 2/12], [0.4, 2/12], [0.6, 2/12], [0.8, 2/12]]
+v1 = [[0.1, 1/12], [0.3, 1/12], [0.5, 1/12], [0.7, 1/12], [0.9, 1/12]]
+r1 = [[0, 1/12], [0.2, 1/12], [0.4, 1/12], [0.6, 1/12], [0.8, 1/12], [1.0, 1/12]]
+
+v2 = [[0, 2/12], [0.2, 2/12], [0.4, 2/12], [0.6, 2/12], [0.8, 2/12], [1.0, 2/12]]
 r2 = [[0.1, 2/12], [0.3, 2/12], [0.5, 2/12], [0.7, 2/12], [0.9, 2/12]]
 
 v3 = [[0.1, 3/12], [0.3, 3/12], [0.5, 3/12], [0.7, 3/12], [0.9, 3/12]]
-r3 = [[0.2, 3/12], [0.4, 3/12], [0.6, 3/12], [0.8, 3/12]]
+r3 = [[0, 3/12], [0.2, 3/12], [0.4, 3/12], [0.6, 3/12], [0.8, 3/12], [1.0, 3/12]]
 
-v = v1 + v2 + v3
-r = r1 + r2 + r3
+v4 = [[0, 4/12], [0.2, 4/12], [0.4, 4/12], [0.6, 4/12], [0.8, 4/12], [1.0, 4/12]]
+r4 = [[0.1, 4/12], [0.3, 4/12], [0.5, 4/12], [0.7, 4/12], [0.9, 4/12]]
+
+v = v0 + v1 + v2 + v3 + v4
+r = r0 + r1 + r2 + r3 + r4
 s = v + r
 
 def dist(x, y, a, b):
@@ -96,13 +102,16 @@ rho3 = Function(V)  # Responsive materials
 rho2.dat.data[:] = rho2_array
 rho3.dat.data[:] = rho3_array
 
+rho2 = Constant(0.0)
+rho3 = Constant(0.0)
+
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
 
 rho_initial = Function(V)
 rho_initial =  rho3 - rho2
 rho_initial = interpolate(rho_initial, V)
-File("output4/rho_initial.pvd").write(rho_initial)
+File(options.output + '/rho_initial.pvd').write(rho_initial)
 # Create initial design
 ###### End Initial Design #####
 
@@ -169,8 +178,8 @@ def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
 # Residual strains
-epsilon_star_1 =  -1 * outer(e1, e1) + -1 * outer(e2, e2)
-epsilon_star_2 =  outer(e1, e1) + outer(e2, e2)
+epsilon_star_1 =  -1 * outer(e1, e1) + outer(e2, e2)
+epsilon_star_2 =  outer(e1, e1) + -1 * outer(e2, e2)
 
 def sigma_star_1(Id):
 	return lambda_r1 * tr(epsilon_star_1) * Id + 2 * mu_r1 * epsilon_star_1
@@ -275,6 +284,8 @@ def FormObjectiveGradient(tao, x, G):
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
 
+	print(dJdrho3_array)
+
 	N = M * 2
 	index_2 = []
 	index_3 = []
@@ -287,6 +298,8 @@ def FormObjectiveGradient(tao, x, G):
 
 	G.setValues(index_2, dJdrho2_array)
 	G.setValues(index_3, dJdrho3_array)
+
+	# print(G.view())
 
 	f_val = assemble(J)
 	return f_val
