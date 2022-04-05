@@ -1,3 +1,22 @@
+def parse():
+	import argparse
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-tao_monitor', '--tao_monitor', action='store_true', help = 'TAO monitor')
+	parser.add_argument('-tao_max_it', '--tao_max_it', type = int, default = 100, help = 'Number of TAO iterations')
+	parser.add_argument('-lr1', '--lagrange_r1', type = float, default = 1.0, help = 'Lagrange multiplier for material 1')
+	parser.add_argument('-lr2', '--lagrange_r2', type = float, default = 0.1, help = 'Lagrange multiplier for material 2')
+	parser.add_argument('-k', '--kappa', type = float, default = 1.0e-2, help = 'Weight of Modica-Mortola')
+	parser.add_argument('-e', '--epsilon', type = float, default = 5.0e-3, help = 'Phase-field regularization parameter')
+	parser.add_argument('-o', '--output', type = str, default = 'output1', help = 'Output folder')
+	parser.add_argument('-m', '--mesh', type = str, default = 'main.msh', help = 'Dimensions of meshed beam')
+	parser.add_argument('-er1', '--er1modulus', type = float, default = 0.1, help = 'Elastic Modulus for material 1')
+	parser.add_argument('-er2', '--er2modulus', type = float, default = 1.0, help = 'Elastic Modulus for material 2')
+	parser.add_argument('-p', '--power_p', type = float, default = 2.0, help = 'Power for elasticity interpolation')
+	options = parser.parse_args()
+	return options
+
+options = parse()
+
 from firedrake import *
 from petsc4py import PETSc
 import time
@@ -6,7 +25,7 @@ import numpy as np
 start = time.time()
 
 # Import gmesh
-mesh = Mesh("main.msh")
+mesh = Mesh(options.mesh)
 Id = Identity(mesh.geometric_dimension()) #Identity tensor
 
 # Define the function spaces
@@ -88,14 +107,14 @@ File("output4/rho_initial.pvd").write(rho_initial)
 ###### End Initial Design #####
 
 # Define the constant parameters used in the problem
-kappa = 1.0e-2
+kappa = options.kappa
 cw = pi/8  # Normalization parameter
-# lagrange_v = 1.0e-8
-lagrange_r1 = 2.0
-# lagrange_r2 = 0.5
+lagrange_v = 1.0e-8
+lagrange_r1 = options.lagrange_r1
+lagrange_r2 = options.lagrange_r2
 
 delta = 1.0e-3
-epsilon = 5.0e-3
+epsilon = options.epsilon
 
 kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
@@ -107,8 +126,8 @@ e2 = as_vector((0, 1))
 
 # Young's modulus of the beam and poisson ratio
 E_v = delta
-E_r1 = 1.0
-E_r2 = 1.0e-1
+E_r1 = options.er1modulus
+E_r2 = options.er2modulus
 nu = 0.3 #nu poisson ratio
 
 mu_v = E_v/(2 * (1 + nu))
@@ -131,15 +150,15 @@ def v_r2(rho):
 
 # Define h(x)=x^2
 def h_v(rho):
-	return (1 - rho.sub(0) - rho.sub(1))**2
+	return pow((1 - rho.sub(0) - rho.sub(1)), options.power_p)
 
 # Define h(x)=x^2
 def h_r1(rho):
-	return (rho.sub(0))**2
+	return pow(rho.sub(0), options.power_p)
 
 # Define h(x)=x^2
 def h_r2(rho):
-	return (rho.sub(1))**2
+	return pow(rho.sub(1), options.power_p)
 
 # Define W(x) function
 def W(rho):
@@ -150,8 +169,8 @@ def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
 # Residual strains
-epsilon_star_1 =  outer(e1, e1) + outer(e2, e2)
-epsilon_star_2 =  -1 * outer(e1, e1) + -1 * outer(e2, e2)
+epsilon_star_1 =  -1 * outer(e1, e1) + -1 * outer(e2, e2)
+epsilon_star_2 =  outer(e1, e1) + outer(e2, e2)
 
 def sigma_star_1(Id):
 	return lambda_r1 * tr(epsilon_star_1) * Id + 2 * mu_r1 * epsilon_star_1
@@ -232,7 +251,7 @@ def FormObjectiveGradient(tao, x, G):
 		rho_i = Function(V)
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
-		File("output4/rho-{}.pvd".format(i)).write(rho_i)
+		File(options.output + '/rho-{}.pvd'.format(i)).write(rho_i)
 
 	with rho.dat.vec as rho_vec:
 		rho_vec.set(0.0)
@@ -286,8 +305,8 @@ with ub.dat.vec as ub_vec:
 
 # Setting TAO solver
 tao = PETSc.TAO().create(PETSc.COMM_SELF)
-tao.setType('bncg')
-# tao.setType('blmvm')
+# tao.setType('bncg')
+tao.setType('blmvm')
 tao.setObjectiveGradient(FormObjectiveGradient, None)
 tao.setVariableBounds(rho_lb, rho_ub)
 tao.setFromOptions()
@@ -307,10 +326,10 @@ with rho.dat.vec as rho_vec:
 rho_final = Function(V)
 rho_final = rho.sub(1) - rho.sub(0)
 rho_final = interpolate(rho_final, V)
-File("output4/rho-final.pvd").write(rho_final)
-File("output4/rho-final-rho2.pvd").write(rho.sub(0))
-File("output4/rho-final-rho3.pvd").write(rho.sub(1))
-File("output4/u.pvd").write(u)
+File(options.output + '/rho-final.pvd').write(rho_final)
+File(options.output + '/rho-final-rho2.pvd').write(rho.sub(0))
+File(options.output + '/rho-final-rho3.pvd').write(rho.sub(1))
+File(options.output + '/u.pvd').write(u)
 
 end = time.time()
 print("\nExecution time (in seconds):", (end - start))
