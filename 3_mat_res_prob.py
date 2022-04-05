@@ -3,14 +3,14 @@ def parse():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-tao_monitor', '--tao_monitor', action='store_true', help = 'TAO monitor')
 	parser.add_argument('-tao_max_it', '--tao_max_it', type = int, default = 100, help = 'Number of TAO iterations')
-	parser.add_argument('-lr1', '--lagrange_r1', type = float, default = 1.0, help = 'Lagrange multiplier for material 1')
-	parser.add_argument('-lr2', '--lagrange_r2', type = float, default = 0.1, help = 'Lagrange multiplier for material 2')
+	parser.add_argument('-l1', '--lagrange_r1', type = float, default = 1.0, help = 'Lagrange multiplier for material 1')
+	parser.add_argument('-l2', '--lagrange_r2', type = float, default = 0.1, help = 'Lagrange multiplier for material 2')
 	parser.add_argument('-k', '--kappa', type = float, default = 1.0e-2, help = 'Weight of Modica-Mortola')
 	parser.add_argument('-e', '--epsilon', type = float, default = 5.0e-3, help = 'Phase-field regularization parameter')
 	parser.add_argument('-o', '--output', type = str, default = 'output1', help = 'Output folder')
 	parser.add_argument('-m', '--mesh', type = str, default = 'main.msh', help = 'Dimensions of meshed beam')
-	parser.add_argument('-er1', '--er1modulus', type = float, default = 0.1, help = 'Elastic Modulus for material 1')
-	parser.add_argument('-er2', '--er2modulus', type = float, default = 1.0, help = 'Elastic Modulus for material 2')
+	parser.add_argument('-e1', '--er1modulus', type = float, default = 0.1, help = 'Elastic Modulus for material 1')
+	parser.add_argument('-e2', '--er2modulus', type = float, default = 1.0, help = 'Elastic Modulus for material 2')
 	parser.add_argument('-p', '--power_p', type = float, default = 2.0, help = 'Power for elasticity interpolation')
 	options = parser.parse_args()
 	return options
@@ -204,11 +204,11 @@ func3_sub2 = inner(grad(v_r1(rho)), grad(v_r1(rho))) * dx
 func3_sub3 = inner(grad(v_r2(rho)), grad(v_r2(rho))) * dx
 
 func3 = kappa_m_e * (func3_sub1 + func3_sub2 + func3_sub3)
-# func4 = lagrange_v * v_v(rho) * dx  # Void material
+func4 = lagrange_v * v_v(rho) * dx  # Void material
 func5 = lagrange_r1 * v_r1(rho) * dx  # Structural material
-# func6 = lagrange_r2 * v_r2(rho) * dx  # Responsive material
+func6 = lagrange_r2 * v_r2(rho) * dx  # Responsive material
 
-J = func1 + func2 + func3 + func5
+J = func1 + func2 + func3 + func4 + func5 +  func6
 
 # Define the weak form for forward PDE
 a_forward_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(v)) * dx
