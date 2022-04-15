@@ -178,8 +178,8 @@ def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
 # Residual strains
-epsilon_star_1 =  -1 * outer(e1, e1) + outer(e2, e2)
-epsilon_star_2 =  outer(e1, e1) + -1 * outer(e2, e2)
+epsilon_star_1 =  -1 * (outer(e1, e1) + outer(e2, e2)) # Blue
+epsilon_star_2 =  outer(e1, e1) + outer(e2, e2)  # Red
 
 def sigma_star_1(Id):
 	return lambda_r1 * tr(epsilon_star_1) * Id + 2 * mu_r1 * epsilon_star_1
