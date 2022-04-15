@@ -96,14 +96,14 @@ for i in range(len(r)):
 			rho3_array[j] = temp
 
 rho =  Function(VV)
-rho2 = Function(V)  # Structural materials
-rho3 = Function(V)  # Responsive materials
+rho2 = Function(V)  # Responsive material 1
+rho3 = Function(V)  # Responsive material 2
 
-rho2.dat.data[:] = rho2_array
-rho3.dat.data[:] = rho3_array
+rho2.dat.data[:] = rho2_array  # Blue responsive material 1
+rho3.dat.data[:] = rho3_array  # Red responsive material 2
 
-rho2 = Constant(0.0)
-rho3 = Constant(0.0)
+rho2 = Constant(0.4)
+rho3 = Constant(0.4)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -214,8 +214,8 @@ func3_sub3 = inner(grad(v_r2(rho)), grad(v_r2(rho))) * dx
 
 func3 = kappa_m_e * (func3_sub1 + func3_sub2 + func3_sub3)
 func4 = lagrange_v * v_v(rho) * dx  # Void material
-func5 = lagrange_r1 * v_r1(rho) * dx  # Structural material
-func6 = lagrange_r2 * v_r2(rho) * dx  # Responsive material
+func5 = lagrange_r1 * v_r1(rho) * dx  # Responsive material 1(Blue)
+func6 = lagrange_r2 * v_r2(rho) * dx  # Responsive material 2(Red)
 
 J = func1 + func2 + func3 + func4 + func5 +  func6
 
@@ -240,7 +240,7 @@ L_lagrange_r1 = h_r1(rho) * inner(sigma_star_1(Id), epsilon(p)) * dx
 L_lagrange_r2 = h_r2(rho) * inner(sigma_star_2(Id), epsilon(p)) * dx
 L_lagrange = L_lagrange_r1 + L_lagrange_r2
 R_lagrange = a_lagrange - L_lagrange
-L = J + R_lagrange
+L = J - R_lagrange
 
 
 # Define the weak form for adjoint PDE
@@ -250,7 +250,7 @@ a_adjoint_r2 = h_r2(rho) * inner(sigma_r2(v, Id), epsilon(p)) * dx
 a_adjoint = a_adjoint_v + a_adjoint_r1 + a_adjoint_r2
 
 L_adjoint = inner(f, v) * ds(8)
-R_adj = a_adjoint + L_adjoint
+R_adj = a_adjoint - L_adjoint
 
 
 def FormObjectiveGradient(tao, x, G):
@@ -284,7 +284,7 @@ def FormObjectiveGradient(tao, x, G):
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
 
-	print(dJdrho3_array)
+	# print(dJdrho2_array)
 
 	N = M * 2
 	index_2 = []
