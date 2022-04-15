@@ -1,7 +1,7 @@
 import subprocess
 
 # Ratio Er/Es = 10.0
-program_list = ["python3 3_mat_res_prob.py -tao_monitor -tao_max_it 400 -l1 10.0e-3 -l2 10.0e-2 -m '1_to_3_mesh.msh' -o 'test' -e1 1.0 -e2 1.0e-1 -k 1.0e-2 -e 4.0e-3 -p 1.0",]
+program_list = ["python3 3_mat_res_prob.py -tao_monitor -tao_max_it 500 -lr 1.45 -ls 1.45 -m '1_to_3_mesh.msh' -o 'test' -er 1.0 -es 1.0e-1 -k 1.0e-2 -e 4.0e-3 -p 1.0",]
                 #"python3 blocking_load_2_mat.py -tao_monitor -tao_max_it 1000 -l 0.10 -m '1_to_1_mesh.msh' -o '1_to_1_mesh' -er 1.0 -es 1.0e-1 -k 1.0e-5 -e 4.0e-3 -p 1.0",]
                 #"python3 blocking_load_2_mat.py -tao_monitor -tao_max_it 1000 -l 0.016 -m '1_to_6_mesh.msh' -o '1_to_6_mesh' -er 1.0 -es 1.0e-1 -k 1.0e-5 -e 4.0e-3 -p 1.0"]
 

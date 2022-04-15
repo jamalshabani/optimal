@@ -3,14 +3,14 @@ def parse():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-tao_monitor', '--tao_monitor', action='store_true', help = 'TAO monitor')
 	parser.add_argument('-tao_max_it', '--tao_max_it', type = int, default = 100, help = 'Number of TAO iterations')
-	parser.add_argument('-l1', '--lagrange_r1', type = float, default = 1.0, help = 'Lagrange multiplier for material 1')
-	parser.add_argument('-l2', '--lagrange_r2', type = float, default = 0.1, help = 'Lagrange multiplier for material 2')
+	parser.add_argument('-ls', '--lagrange_s', type = float, default = 1.0, help = 'Lagrange multiplier for structural material')
+	parser.add_argument('-lr', '--lagrange_r', type = float, default = 0.1, help = 'Lagrange multiplier for responsive material')
 	parser.add_argument('-k', '--kappa', type = float, default = 1.0e-2, help = 'Weight of Modica-Mortola')
 	parser.add_argument('-e', '--epsilon', type = float, default = 5.0e-3, help = 'Phase-field regularization parameter')
 	parser.add_argument('-o', '--output', type = str, default = 'output1', help = 'Output folder')
 	parser.add_argument('-m', '--mesh', type = str, default = 'main.msh', help = 'Dimensions of meshed beam')
-	parser.add_argument('-e1', '--er1modulus', type = float, default = 0.1, help = 'Elastic Modulus for material 1')
-	parser.add_argument('-e2', '--er2modulus', type = float, default = 1.0, help = 'Elastic Modulus for material 2')
+	parser.add_argument('-es', '--esmodulus', type = float, default = 0.1, help = 'Elastic Modulus for structural material')
+	parser.add_argument('-er', '--ermodulus', type = float, default = 1.0, help = 'Elastic Modulus for responsive material')
 	parser.add_argument('-p', '--power_p', type = float, default = 2.0, help = 'Power for elasticity interpolation')
 	options = parser.parse_args()
 	return options
@@ -96,14 +96,14 @@ for i in range(len(r)):
 			rho3_array[j] = temp
 
 rho =  Function(VV)
-rho2 = Function(V)  # Responsive material 1
-rho3 = Function(V)  # Responsive material 2
+rho2 = Function(V)  # Structural material 1(Blue)
+rho3 = Function(V)  # Responsive material 2(Red)
 
-rho2.dat.data[:] = rho2_array  # Blue responsive material 1
-rho3.dat.data[:] = rho3_array  # Red responsive material 2
+rho2.dat.data[:] = rho2_array
+rho3.dat.data[:] = rho3_array
 
-rho2 = Constant(0.4)
-rho3 = Constant(0.4)
+# rho2 = Constant(0.45)
+# rho3 = Constant(0.45)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -119,8 +119,8 @@ File(options.output + '/rho_initial.pvd').write(rho_initial)
 kappa = options.kappa
 cw = pi/8  # Normalization parameter
 lagrange_v = 1.0e-8
-lagrange_r1 = options.lagrange_r1
-lagrange_r2 = options.lagrange_r2
+lagrange_s = options.lagrange_s
+lagrange_r = options.lagrange_r
 
 delta = 1.0e-3
 epsilon = options.epsilon
@@ -135,26 +135,26 @@ e2 = as_vector((0, 1))
 
 # Young's modulus of the beam and poisson ratio
 E_v = delta
-E_r1 = options.er1modulus
-E_r2 = options.er2modulus
+E_s = options.er1modulus
+E_r = options.er2modulus
 nu = 0.3 #nu poisson ratio
 
 mu_v = E_v/(2 * (1 + nu))
 lambda_v = (E_v * nu)/((1 + nu) * (1 - 2 * nu))
 
-mu_r1 = E_r1/(2 * (1 + nu))
-lambda_r1 = (E_r1 * nu)/((1 + nu) * (1 - 2 * nu))
+mu_s = E_s/(2 * (1 + nu))
+lambda_s = (E_s * nu)/((1 + nu) * (1 - 2 * nu))
 
-mu_r2 = E_r2/(2 * (1 + nu))
-lambda_r2 = (E_r2 * nu)/((1 + nu) * (1 - 2 * nu))
+mu_r = E_r/(2 * (1 + nu))
+lambda_r = (E_r * nu)/((1 + nu) * (1 - 2 * nu))
 
 def v_v(rho):
 	return 1 - rho.sub(0) - rho.sub(1)
 
-def v_r1(rho):
+def v_s(rho):
 	return rho.sub(0)
 
-def v_r2(rho):
+def v_r(rho):
 	return rho.sub(1)
 
 # Define h(x)=x^2
@@ -162,11 +162,11 @@ def h_v(rho):
 	return pow((1 - rho.sub(0) - rho.sub(1)), options.power_p)
 
 # Define h(x)=x^2
-def h_r1(rho):
+def h_s(rho):
 	return pow(rho.sub(0), options.power_p)
 
 # Define h(x)=x^2
-def h_r2(rho):
+def h_r(rho):
 	return pow(rho.sub(1), options.power_p)
 
 # Define W(x) function
@@ -177,24 +177,20 @@ def W(rho):
 def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
-# Residual strains
-epsilon_star_1 =  -1 * (outer(e1, e1) + outer(e2, e2)) # Blue
-epsilon_star_2 =  outer(e1, e1) + outer(e2, e2)  # Red
+# Residual strain
+epsilon_star = outer(e1, e1) + outer(e2, e2)
 
-def sigma_star_1(Id):
-	return lambda_r1 * tr(epsilon_star_1) * Id + 2 * mu_r1 * epsilon_star_1
-
-def sigma_star_2(Id):
-	return lambda_r2 * tr(epsilon_star_2) * Id + 2 * mu_r2 * epsilon_star_2
+def sigma_star(Id):
+	return lambda_s * tr(epsilon_star_1) * Id + 2 * mu_s * epsilon_star_1
 
 def sigma_v(u, Id):
     return lambda_v * tr(epsilon(u)) * Id + 2 * mu_v * epsilon(u)
 
-def sigma_r1(u, Id):
-    return lambda_r1 * tr(epsilon(u)) * Id + 2 * mu_r1 * epsilon(u)
+def sigma_s(u, Id):
+    return lambda_s * tr(epsilon(u)) * Id + 2 * mu_s * epsilon(u)
 
-def sigma_r2(u, Id):
-    return lambda_r2 * tr(epsilon(u)) * Id + 2 * mu_r2 * epsilon(u)
+def sigma_r(u, Id):
+    return lambda_r * tr(epsilon(u)) * Id + 2 * mu_r * epsilon(u)
 
 # Define test function and beam displacement
 v = TestFunction(VV)
@@ -209,48 +205,48 @@ func1 = inner(f, u) * ds(8)
 func2 = kappa_d_e * W(rho) * dx
 
 func3_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
-func3_sub2 = inner(grad(v_r1(rho)), grad(v_r1(rho))) * dx
-func3_sub3 = inner(grad(v_r2(rho)), grad(v_r2(rho))) * dx
+func3_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
+func3_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 
 func3 = kappa_m_e * (func3_sub1 + func3_sub2 + func3_sub3)
 func4 = lagrange_v * v_v(rho) * dx  # Void material
-func5 = lagrange_r1 * v_r1(rho) * dx  # Responsive material 1(Blue)
-func6 = lagrange_r2 * v_r2(rho) * dx  # Responsive material 2(Red)
+func5 = lagrange_s * v_s(rho) * dx  # Responsive material 1(Blue)
+func6 = lagrange_r * v_r(rho) * dx  # Responsive material 2(Red)
 
 J = func1 + func2 + func3 + func4 + func5 +  func6
 
 # Define the weak form for forward PDE
 a_forward_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(v)) * dx
-a_forward_r1 = h_r1(rho) * inner(sigma_r1(u, Id), epsilon(v)) * dx
-a_forward_r2 = h_r2(rho) * inner(sigma_r2(u, Id), epsilon(v)) * dx
-a_forward = a_forward_v + a_forward_r1 + a_forward_r2
+a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
+a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
+a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward_r1 = h_r1(rho) * inner(sigma_star_1(Id), epsilon(v)) * dx
-L_forward_r2 = h_r2(rho) * inner(sigma_star_2(Id), epsilon(v)) * dx
-L_forward = L_forward_r1 +  L_forward_r2
+L_forward_s = h_s(rho) * inner(sigma_star_1(Id), epsilon(v)) * dx
+L_forward_r = h_r(rho) * inner(sigma_star_2(Id), epsilon(v)) * dx
+L_forward = L_forward_s +  L_forward_r
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
 a_lagrange_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(p)) * dx
-a_lagrange_r1 = h_r1(rho) * inner(sigma_r1(u, Id), epsilon(p)) * dx
-a_lagrange_r2 = h_r2(rho) * inner(sigma_r2(u, Id), epsilon(p)) * dx
-a_lagrange   = a_lagrange_v + a_lagrange_r1 + a_lagrange_r2
+a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
+a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
+a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange_r1 = h_r1(rho) * inner(sigma_star_1(Id), epsilon(p)) * dx
-L_lagrange_r2 = h_r2(rho) * inner(sigma_star_2(Id), epsilon(p)) * dx
-L_lagrange = L_lagrange_r1 + L_lagrange_r2
+L_lagrange_s = h_s(rho) * inner(sigma_star_1(Id), epsilon(p)) * dx
+L_lagrange_r = h_r(rho) * inner(sigma_star_2(Id), epsilon(p)) * dx
+L_lagrange = L_lagrange_s + L_lagrange_r
 R_lagrange = a_lagrange - L_lagrange
-L = J - R_lagrange
+L = J + R_lagrange
 
 
 # Define the weak form for adjoint PDE
 a_adjoint_v = h_v(rho) * inner(sigma_v(v, Id), epsilon(p)) * dx
-a_adjoint_r1 = h_r1(rho) * inner(sigma_r1(v, Id), epsilon(p)) * dx
-a_adjoint_r2 = h_r2(rho) * inner(sigma_r2(v, Id), epsilon(p)) * dx
-a_adjoint = a_adjoint_v + a_adjoint_r1 + a_adjoint_r2
+a_adjoint_s = h_s(rho) * inner(sigma_s(v, Id), epsilon(p)) * dx
+a_adjoint_r = h_r(rho) * inner(sigma_r(v, Id), epsilon(p)) * dx
+a_adjoint = a_adjoint_v + a_adjoint_s + a_adjoint_r
 
 L_adjoint = inner(f, v) * ds(8)
-R_adj = a_adjoint - L_adjoint
+R_adj = a_adjoint + L_adjoint
 
 
 def FormObjectiveGradient(tao, x, G):
@@ -318,7 +314,6 @@ with ub.dat.vec as ub_vec:
 
 # Setting TAO solver
 tao = PETSc.TAO().create(PETSc.COMM_SELF)
-# tao.setType('bncg')
 tao.setType('blmvm')
 tao.setObjectiveGradient(FormObjectiveGradient, None)
 tao.setVariableBounds(rho_lb, rho_ub)
