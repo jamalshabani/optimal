@@ -181,7 +181,7 @@ def epsilon(u):
 epsilon_star = outer(e1, e1) + outer(e2, e2)
 
 def sigma_star(Id):
-	return lambda_s * tr(epsilon_star_1) * Id + 2 * mu_s * epsilon_star_1
+	return lambda_r * tr(epsilon_star) * Id + 2 * mu_r * epsilon_star
 
 def sigma_v(u, Id):
     return lambda_v * tr(epsilon(u)) * Id + 2 * mu_v * epsilon(u)
@@ -221,9 +221,9 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward_s = h_s(rho) * inner(sigma_star_1(Id), epsilon(v)) * dx
-L_forward_r = h_r(rho) * inner(sigma_star_2(Id), epsilon(v)) * dx
-L_forward = L_forward_s +  L_forward_r
+# L_forward_s = h_s(rho) * inner(sigma_star_1(Id), epsilon(v)) * dx
+L_forward_r = h_r(rho) * inner(sigma_star(Id), epsilon(v)) * dx
+L_forward = L_forward_r
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -232,9 +232,9 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange_s = h_s(rho) * inner(sigma_star_1(Id), epsilon(p)) * dx
-L_lagrange_r = h_r(rho) * inner(sigma_star_2(Id), epsilon(p)) * dx
-L_lagrange = L_lagrange_s + L_lagrange_r
+# L_lagrange_s = h_s(rho) * inner(sigma_star_1(Id), epsilon(p)) * dx
+L_lagrange_r = h_r(rho) * inner(sigma_star(Id), epsilon(p)) * dx
+L_lagrange = L_lagrange_r
 R_lagrange = a_lagrange - L_lagrange
 L = J + R_lagrange
 
