@@ -216,7 +216,7 @@ L = J - R_lagrange
 def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
-	if (i%50) == 0:
+	if (i%10) == 0:
 		rho_i = Function(V)
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
