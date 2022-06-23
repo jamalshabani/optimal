@@ -293,7 +293,6 @@ def FormObjectiveGradient(tao, x, G):
 	G.setValues(index_3, dJdrho3_array)
 
 	# print(G.view())
-
 	f_val = assemble(J)
 	return f_val
 
