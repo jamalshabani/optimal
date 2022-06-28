@@ -129,8 +129,7 @@ kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
 
 f = Constant((0, -2))
-u_star = Constant((-1, 1))
-u_star = interpolate(u_star, VV)
+u_star = Constant((0, 2))
 
 # Young's modulus of the beam and poisson ratio
 E_v = delta
@@ -234,7 +233,7 @@ a_adjoint_s = h_s(rho) * inner(sigma_s(v, Id), epsilon(p)) * dx
 a_adjoint_r = h_r(rho) * inner(sigma_r(v, Id), epsilon(p)) * dx
 a_adjoint = a_adjoint_v + a_adjoint_s + a_adjoint_r
 
-L_adjoint = inner(u_star, v) * dx(4)
+L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
 
@@ -258,11 +257,10 @@ def FormObjectiveGradient(tao, x, G):
 	print("The volume fraction(Vr) is {}".format(volume))
 
 	# Solve forward PDE
-	solve(R_fwd == 0, u, bcs = bcs)
-	File(options.output + '/u.pvd').write(u)
+	solve(R_fwd == 0, u, bcs = bcs, solver_parameters={'snes_max_it': 500})
 
 	# Solve adjoint PDE
-	solve(R_adj == 0, p, bcs = bcs)
+	solve(R_adj == 0, p, bcs = bcs, solver_parameters={'snes_max_it': 500})
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
