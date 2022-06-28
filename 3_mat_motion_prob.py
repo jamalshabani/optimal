@@ -102,8 +102,8 @@ rho3 = Function(V)  # Responsive material 2(Red)
 rho2.dat.data[:] = rho2_array
 rho3.dat.data[:] = rho3_array
 
-rho2 = Constant(0.4)
-rho3 = Constant(0.4)
+# rho2 = Constant(0.4)
+# rho3 = Constant(0.4)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -202,7 +202,7 @@ p = Function(VV)
 bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
-func1 = 0.5 * inner(u - u_star, u - u_star) * dx(2)
+func1 = 0.5 * inner(u - u_star, u - u_star) * dx(4)
 func2 = kappa_d_e * W(rho) * dx
 
 func3_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
@@ -210,11 +210,11 @@ func3_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func3_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 
 func3 = kappa_m_e * (func3_sub1 + func3_sub2 + func3_sub3)
-# func4 = lagrange_v * v_v(rho) * dx  # Void material
+func4 = lagrange_v * v_v(rho) * dx  # Void material
 func5 = lagrange_s * v_s(rho) * dx  # Responsive material 1(Blue)
-func4 = lagrange_r * v_r(rho) * dx  # Responsive material 2(Red)
+func6 = lagrange_r * v_r(rho) * dx  # Responsive material 2(Red)
 
-J = func1 + func2 + func3 + func4 + func5
+J = func1 + func2 + func3 + func4 + func5 + func6
 
 # Define the weak form for forward PDE
 a_forward_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(v)) * dx
@@ -242,7 +242,7 @@ a_adjoint_s = h_s(rho) * inner(sigma_s(v, Id), epsilon(p)) * dx
 a_adjoint_r = h_r(rho) * inner(sigma_r(v, Id), epsilon(p)) * dx
 a_adjoint = a_adjoint_v + a_adjoint_s + a_adjoint_r
 
-L_adjoint = inner(u - u_star, v) * dx(2)
+L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
 
