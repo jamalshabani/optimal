@@ -102,8 +102,8 @@ rho3 = Function(V)  # Responsive material 2(Red)
 rho2.dat.data[:] = rho2_array
 rho3.dat.data[:] = rho3_array
 
-# rho2 = Constant(0.4)
-# rho3 = Constant(0.4)
+rho2 = Constant(0.4)
+rho3 = Constant(0.4)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -178,12 +178,6 @@ def W(rho):
 def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
-# Residual strain
-epsilon_star = outer(e1, e1) + outer(e2, e2)
-
-def sigma_star(Id):
-	return lambda_r * tr(epsilon_star) * Id + 2 * mu_r * epsilon_star
-
 def sigma_v(u, Id):
     return lambda_v * tr(epsilon(u)) * Id + 2 * mu_v * epsilon(u)
 
@@ -231,7 +225,7 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = inner(f, v) * ds(8)
+L_lagrange = inner(f, p) * ds(8)
 R_lagrange = a_lagrange - L_lagrange
 L = J - R_lagrange
 
@@ -267,6 +261,7 @@ def FormObjectiveGradient(tao, x, G):
 
 	# Solve forward PDE
 	solve(R_fwd == 0, u, bcs = bcs)
+	File(options.output + '/u.pvd').write(u)
 
 	# Solve adjoint PDE
 	solve(R_adj == 0, p, bcs = bcs)
