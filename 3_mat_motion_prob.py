@@ -129,10 +129,8 @@ kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
 
 f = Constant((0, -2))
-u_star = Constant((0, 1))
-
-e1 = as_vector((1, 0))
-e2 = as_vector((0, 1))
+u_star = Constant((-1, 1))
+u_star = interpolate(u_star, VV)
 
 # Young's modulus of the beam and poisson ratio
 E_v = delta
@@ -236,7 +234,7 @@ a_adjoint_s = h_s(rho) * inner(sigma_s(v, Id), epsilon(p)) * dx
 a_adjoint_r = h_r(rho) * inner(sigma_r(v, Id), epsilon(p)) * dx
 a_adjoint = a_adjoint_v + a_adjoint_s + a_adjoint_r
 
-L_adjoint = inner(u - u_star, v) * dx(4)
+L_adjoint = inner(u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
 
