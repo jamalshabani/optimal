@@ -102,8 +102,8 @@ rho3 = Function(V)  # Responsive material 2(Red)
 rho2.dat.data[:] = rho2_array
 rho3.dat.data[:] = rho3_array
 
-rho2 = Constant(0.4)
-rho3 = Constant(0.4)
+# rho2 = Constant(0.4)
+# rho3 = Constant(0.4)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -128,8 +128,8 @@ epsilon = options.epsilon
 kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
 
-f = Constant((0, -2))
-u_star = Constant((0, 2))
+f = Constant((0, -1))
+u_star = Constant((0, 1))
 
 # Young's modulus of the beam and poisson ratio
 E_v = delta
@@ -200,12 +200,12 @@ func3_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func3_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func3_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 
-func3 = kappa_m_e * (func3_sub1 + func3_sub2 + func3_sub3)
-func4 = lagrange_v * v_v(rho) * dx  # Void material
-func5 = lagrange_s * v_s(rho) * dx  # Responsive material 1(Blue)
-func6 = lagrange_r * v_r(rho) * dx  # Responsive material 2(Red)
+func3 = kappa_m_e * 0.5 * (func3_sub1 + func3_sub2 + func3_sub3)
+# func4 = lagrange_v * v_v(rho) * dx  # Void material
+func4 = lagrange_s * v_s(rho) * dx  # Responsive material 1(Blue)
+func5 = lagrange_r * v_r(rho) * dx  # Responsive material 2(Red)
 
-J = func1 + func2 + func3 + func4 + func5 + func6
+J = func1 + func2 + func3 + func4 + func5
 
 # Define the weak form for forward PDE
 a_forward_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(v)) * dx
@@ -250,11 +250,15 @@ def FormObjectiveGradient(tao, x, G):
 		rho_vec.set(0.0)
 		rho_vec.axpy(1.0, x)
 
-	# volume = assemble(rho.sub(0) * dx) * 3
-	# print("The volume fraction(Vs) is {}".format(volume))
+	volume = assemble(v_v(rho) * dx) * 3
+	print("The volume fraction(Vv) is {}".format(volume))
 
-	volume = assemble(rho.sub(1) * dx) * 3
+	volume = assemble(v_s(rho) * dx) * 3
+	print("The volume fraction(Vs) is {}".format(volume))
+
+	volume = assemble(v_r(rho) * dx) * 3
 	print("The volume fraction(Vr) is {}".format(volume))
+	print(" ")
 
 	# Solve forward PDE
 	solve(R_fwd == 0, u, bcs = bcs, solver_parameters={'snes_max_it': 500})
