@@ -62,17 +62,17 @@ def dist(x, y, a, b):
 def g_s(s):
 	if (s < 0.02):
 		return 0
-	if (0.02 < s < 0.03):
-		return (cos((s - 0.03)*pi/0.01) + 1)/2
-	if (s > 0.03):
+	if (0.02 < s < 0.04):
+		return (cos((s - 0.04)*pi/0.02) + 1)/2
+	if (s > 0.04):
 		return 1
 
 def g_r(s):
 	if (s < 0.02):
 		return 1
-	if (0.02 < s < 0.03):
-		return (cos((s - 0.02)*pi/0.01) + 1)/2
-	if (s > 0.03):
+	if (0.02 < s < 0.04):
+		return (cos((s - 0.02)*pi/0.02) + 1)/2
+	if (s > 0.04):
 		return 0
 
 M = len(mesh_coordinates)
@@ -201,11 +201,11 @@ func3_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func3_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 
 func3 = kappa_m_e * 0.5 * (func3_sub1 + func3_sub2 + func3_sub3)
-# func4 = lagrange_v * v_v(rho) * dx  # Void material
-func4 = lagrange_s * v_s(rho) * dx  # Responsive material 1(Blue)
-func5 = lagrange_r * v_r(rho) * dx  # Responsive material 2(Red)
+func4 = lagrange_v * v_v(rho) * dx  # Void material
+func5 = lagrange_s * v_s(rho) * dx  # Responsive material 1(Blue)
+func6 = lagrange_r * v_r(rho) * dx  # Responsive material 2(Red)
 
-J = func1 + func2 + func3 + func4 + func5
+J = func1 + func2 + func3 + func4 + func5 +  func6
 
 # Define the weak form for forward PDE
 a_forward_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(v)) * dx
@@ -245,19 +245,21 @@ def FormObjectiveGradient(tao, x, G):
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
 		File(options.output + '/rho-{}.pvd'.format(i)).write(rho_i)
+		File(options.output + '/u-{}.pvd'.format(i)).write(u)
+
 
 	with rho.dat.vec as rho_vec:
 		rho_vec.set(0.0)
 		rho_vec.axpy(1.0, x)
 
-	volume = assemble(v_v(rho) * dx) * 3
-	print("The volume fraction(Vv) is {}".format(volume))
+	volume_v = assemble(v_v(rho) * dx) * 3
+	print("The volume fraction(Vv) is {}".format(volume_v))
 
-	volume = assemble(v_s(rho) * dx) * 3
-	print("The volume fraction(Vs) is {}".format(volume))
+	volume_s = assemble(v_s(rho) * dx) * 3
+	print("The volume fraction(Vs) is {}".format(volume_s))
 
-	volume = assemble(v_r(rho) * dx) * 3
-	print("The volume fraction(Vr) is {}".format(volume))
+	volume_r = assemble(v_r(rho) * dx) * 3
+	print("The volume fraction(Vr) is {}".format(volume_r))
 	print(" ")
 
 	# Solve forward PDE
