@@ -141,9 +141,6 @@ def FormObjectiveGradient(tao, x, G):
 	with dJdrho.dat.vec as dJdrho_vec:
 		G.set(0.0)
 		G.axpy(1.0, dJdrho_vec)
-		# print(G.getSize())
-		# print(G.norm())
-		# print(G.view())
 
 	f_val = assemble(J)
 	return f_val
