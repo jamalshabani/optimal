@@ -1,16 +1,10 @@
 from firedrake import *
 from firedrake_adjoint import *
+from pyadjoint import *
 from petsc4py import PETSc
 import time
 import numpy as np
 
-try:
-    from pyadjoint import *  # noqa: F401
-except ImportError:
-    print("""This example depends on IPOPT and Python ipopt bindings. \
-  When compiling IPOPT, make sure to link against HSL, as it \
-  is a necessity for practical problems.""")
-    raise
 
 start = time.time()
 
@@ -175,23 +169,6 @@ tao.setType('blmvm')
 tao.setObjectiveGradient(FormObjectiveGradient, None)
 tao.setVariableBounds(rho_lb, rho_ub)
 tao.setFromOptions()
-
-m = Control(rho)
-Jhat = ReducedFunctional(assemble(J), m)
-# Bound constraints
-lb = 0.0
-ub = 1.0
-V0 = Constant(0.4)
-
-# We want V - \int rho dx >= 0, so write this as \int V/delta - rho dx >= 0
-volume_constraint = UFLInequalityConstraint((V0 - rho)*dx, m)
-# Solve the optimisation problem with q = 0.01
-problem = MinimizationProblem(Jhat, bounds=(lb,ub), constraints = volume_constraint)
-parameters = {'maximum_iterations': 20}
-
-solver = IPOPTSolver(problem, parameters=parameters)
-rho_opt = solver.solve()
-File("output1/final-rho_opt.pvd").write(rho_opt)
 
 # Initial design guess
 with rho.dat.vec as rho_vec:
