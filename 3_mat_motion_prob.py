@@ -117,6 +117,9 @@ cw = pi/8  # Normalization parameter
 lagrange_s = options.lagrange_s
 lagrange_r = options.lagrange_r
 
+# Total volume of the domain |omega|
+omega = assemble(interpolate(Constant(1.0), V) * dx)
+
 delta = 1.0e-3
 epsilon = options.epsilon
 
