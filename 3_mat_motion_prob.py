@@ -253,8 +253,14 @@ def FormObjectiveGradient(tao, x, G):
 		rho_vec.set(0.0)
 		rho_vec.axpy(1.0, x)
 
-	volume_v = assemble(v_v(rho) * dx)/omega
-	print("The volume fraction(Vv) is {}".format(volume_v))
+	# Solve forward PDE
+	solve(R_fwd == 0, u, bcs = bcs, solver_parameters={'snes_max_it': 500})
+
+	# Solve adjoint PDE
+	solve(R_adj == 0, p, bcs = bcs, solver_parameters={'snes_max_it': 500})
+
+	objective_value = assemble(J)
+	print("The value of objective function is {}".format(objective_value))
 
 	volume_s = assemble(v_s(rho) * dx)/omega
 	print("The volume fraction(Vs) is {}".format(volume_s))
@@ -262,12 +268,6 @@ def FormObjectiveGradient(tao, x, G):
 	volume_r = assemble(v_r(rho) * dx)/omega
 	print("The volume fraction(Vr) is {}".format(volume_r))
 	print(" ")
-
-	# Solve forward PDE
-	solve(R_fwd == 0, u, bcs = bcs, solver_parameters={'snes_max_it': 500})
-
-	# Solve adjoint PDE
-	solve(R_adj == 0, p, bcs = bcs, solver_parameters={'snes_max_it': 500})
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
