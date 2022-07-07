@@ -116,6 +116,8 @@ kappa = options.kappa
 cw = pi/8  # Normalization parameter
 lagrange_s = options.lagrange_s
 lagrange_r = options.lagrange_r
+volume_s = options.volume_s
+volume_r = options.lagrange_r
 
 # Total volume of the domain |omega|
 omega = assemble(interpolate(Constant(1.0), V) * dx)
@@ -191,18 +193,20 @@ p = Function(VV)
 bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
-func1 = 0.5 * inner(u - u_star, u - u_star) * dx(4)
-func2 = kappa_d_e * W(rho) * dx
+J = 0.5 * inner(u - u_star, u - u_star) * dx(4)
+func1 = kappa_d_e * W(rho) * dx
 
-func3_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
-func3_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
-func3_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
+func2_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
+func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
+func2_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 
-func3 = kappa_m_e * 0.5 * (func3_sub1 + func3_sub2 + func3_sub3)
-func4 = lagrange_s * v_s(rho) * dx  # Responsive material 1(Blue)
-func5 = lagrange_r * v_r(rho) * dx  # Responsive material 2(Red)
+func2 = kappa_m_e * 0.5 * (func2_sub1 + func2_sub2 + func2_sub3)
+func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Responsive material 1(Blue)
+func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
-J = func1 + func2 + func3 + func4 + func5
+# Objective function + Modica-Mortola functional + Volume constraint
+P = func1 + func2 + func3 + func4
+JJ = J + P
 
 # Define the weak form for forward PDE
 a_forward_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(v)) * dx
@@ -221,7 +225,7 @@ a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
 L_lagrange = inner(f, p) * ds(8)
 R_lagrange = a_lagrange - L_lagrange
-L = J - R_lagrange
+L = JJ - R_lagrange
 
 
 # Define the weak form for adjoint PDE
@@ -249,13 +253,13 @@ def FormObjectiveGradient(tao, x, G):
 		rho_vec.set(0.0)
 		rho_vec.axpy(1.0, x)
 
-	volume_v = assemble(v_v(rho) * dx) * 3
+	volume_v = assemble(v_v(rho) * dx)/omega
 	print("The volume fraction(Vv) is {}".format(volume_v))
 
-	volume_s = assemble(v_s(rho) * dx) * 3
+	volume_s = assemble(v_s(rho) * dx)/omega
 	print("The volume fraction(Vs) is {}".format(volume_s))
 
-	volume_r = assemble(v_r(rho) * dx) * 3
+	volume_r = assemble(v_r(rho) * dx)/omega
 	print("The volume fraction(Vr) is {}".format(volume_r))
 	print(" ")
 
@@ -287,8 +291,7 @@ def FormObjectiveGradient(tao, x, G):
 	G.setValues(index_3, dJdrho3_array)
 
 	# print(G.view())
-
-	f_val = assemble(J)
+	f_val = assemble(JJ)
 	return f_val
 
 # Setting lower and upper bounds
