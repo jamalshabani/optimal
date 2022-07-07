@@ -5,6 +5,8 @@ def parse():
 	parser.add_argument('-tao_max_it', '--tao_max_it', type = int, default = 100, help = 'Number of TAO iterations')
 	parser.add_argument('-ls', '--lagrange_s', type = float, default = 1.0, help = 'Lagrange multiplier for structural material')
 	parser.add_argument('-lr', '--lagrange_r', type = float, default = 0.1, help = 'Lagrange multiplier for responsive material')
+	parser.add_argument('-vs', '--volume_s', type = float, default = 0.4, help = 'Volume percentage for structural material')
+	parser.add_argument('-vr', '--volume_r', type = float, default = 0.3, help = 'Volume percentage for responsive material')
 	parser.add_argument('-k', '--kappa', type = float, default = 1.0e-2, help = 'Weight of Modica-Mortola')
 	parser.add_argument('-e', '--epsilon', type = float, default = 5.0e-3, help = 'Phase-field regularization parameter')
 	parser.add_argument('-o', '--output', type = str, default = 'output1', help = 'Output folder')
@@ -37,23 +39,17 @@ VV = VectorFunctionSpace(mesh, 'CG', 1, dim = 2)
 mesh_coordinates = mesh.coordinates.dat.data[:]
 
 # Define the points
-v0 = [[0, 0], [0.2, 0], [0.4, 0], [0.6, 0], [0.8, 0], [1.0, 0]]
-r0 = [[0.1, 0], [0.3, 0], [0.5, 0], [0.7, 0], [0.9, 0]]
-
 v1 = [[0.1, 1/12], [0.3, 1/12], [0.5, 1/12], [0.7, 1/12], [0.9, 1/12]]
-r1 = [[0, 1/12], [0.2, 1/12], [0.4, 1/12], [0.6, 1/12], [0.8, 1/12], [1.0, 1/12]]
+r1 = [[0.2, 1/12], [0.4, 1/12], [0.6, 1/12], [0.8, 1/12]]
 
-v2 = [[0, 2/12], [0.2, 2/12], [0.4, 2/12], [0.6, 2/12], [0.8, 2/12], [1.0, 2/12]]
+v2 = [[0.2, 2/12], [0.4, 2/12], [0.6, 2/12], [0.8, 2/12]]
 r2 = [[0.1, 2/12], [0.3, 2/12], [0.5, 2/12], [0.7, 2/12], [0.9, 2/12]]
 
 v3 = [[0.1, 3/12], [0.3, 3/12], [0.5, 3/12], [0.7, 3/12], [0.9, 3/12]]
-r3 = [[0, 3/12], [0.2, 3/12], [0.4, 3/12], [0.6, 3/12], [0.8, 3/12], [1.0, 3/12]]
+r3 = [[0.2, 3/12], [0.4, 3/12], [0.6, 3/12], [0.8, 3/12]]
 
-v4 = [[0, 4/12], [0.2, 4/12], [0.4, 4/12], [0.6, 4/12], [0.8, 4/12], [1.0, 4/12]]
-r4 = [[0.1, 4/12], [0.3, 4/12], [0.5, 4/12], [0.7, 4/12], [0.9, 4/12]]
-
-v = v0 + v1 + v2 + v3 + v4
-r = r0 + r1 + r2 + r3 + r4
+v = v1 + v2 + v3
+r = r1 + r2 + r3
 s = v + r
 
 def dist(x, y, a, b):
@@ -102,8 +98,8 @@ rho3 = Function(V)  # Responsive material 2(Red)
 rho2.dat.data[:] = rho2_array
 rho3.dat.data[:] = rho3_array
 
-# rho2 = Constant(0.4)
-# rho3 = Constant(0.4)
+rho2 = Constant(0.4)
+rho3 = Constant(0.4)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -118,7 +114,6 @@ File(options.output + '/rho_initial.pvd').write(rho_initial)
 # Define the constant parameters used in the problem
 kappa = options.kappa
 cw = pi/8  # Normalization parameter
-lagrange_v = 1.0e-8
 lagrange_s = options.lagrange_s
 lagrange_r = options.lagrange_r
 
@@ -201,11 +196,10 @@ func3_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func3_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 
 func3 = kappa_m_e * 0.5 * (func3_sub1 + func3_sub2 + func3_sub3)
-func4 = lagrange_v * v_v(rho) * dx  # Void material
-func5 = lagrange_s * v_s(rho) * dx  # Responsive material 1(Blue)
-func6 = lagrange_r * v_r(rho) * dx  # Responsive material 2(Red)
+func4 = lagrange_s * v_s(rho) * dx  # Responsive material 1(Blue)
+func5 = lagrange_r * v_r(rho) * dx  # Responsive material 2(Red)
 
-J = func1 + func2 + func3 + func4 + func5 +  func6
+J = func1 + func2 + func3 + func4 + func5
 
 # Define the weak form for forward PDE
 a_forward_v = h_v(rho) * inner(sigma_v(u, Id), epsilon(v)) * dx
@@ -245,7 +239,7 @@ def FormObjectiveGradient(tao, x, G):
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
 		File(options.output + '/rho-{}.pvd'.format(i)).write(rho_i)
-		File(options.output + '/u-{}.pvd'.format(i)).write(u)
+		#File(options.output + '/u-{}.pvd'.format(i)).write(u)
 
 
 	with rho.dat.vec as rho_vec:
