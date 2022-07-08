@@ -1,6 +1,7 @@
 def parse():
 	import argparse
 	parser = argparse.ArgumentParser()
+	parser.add_argument('-tao_type', '--tao_type', type = str, default = 'blmvm', help = 'TAO algorithm type')
 	parser.add_argument('-tao_monitor', '--tao_monitor', action='store_true', help = 'TAO monitor')
 	parser.add_argument('-tao_max_it', '--tao_max_it', type = int, default = 100, help = 'Number of TAO iterations')
 	parser.add_argument('-ls', '--lagrange_s', type = float, default = 1.0, help = 'Lagrange multiplier for structural material')
