@@ -99,8 +99,8 @@ rho3 = Function(V)  # Responsive material 2(Red)
 rho2.dat.data[:] = rho2_array
 rho3.dat.data[:] = rho3_array
 
-rho2 = Constant(0.4)
-rho3 = Constant(0.4)
+rho2 = Constant(0.5)
+rho3 = Constant(0.5)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
