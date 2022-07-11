@@ -37,6 +37,12 @@ VV = VectorFunctionSpace(mesh, 'CG', 1, dim = 2)
 
 # Create initial design
 ###### Begin Initial Design #####
+mesh_coordinates = mesh.coordinates.dat.data[:]
+
+M = len(mesh_coordinates)
+rho2_array = np.ones(M)
+rho3_array = np.zeros(M)
+
 rho =  Function(VV)
 rho2 = Function(V)  # Structural material 1(Blue)
 rho3 = Function(V)  # Responsive material 2(Red)
