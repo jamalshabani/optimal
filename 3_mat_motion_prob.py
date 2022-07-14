@@ -43,9 +43,9 @@ M = len(mesh_coordinates)
 rho2_array = np.ones(M)
 rho3_array = np.zeros(M)
 
-rho =  Function(VV)
-rho2 = Function(V)  # Structural material 1(Blue)
-rho3 = Function(V)  # Responsive material 2(Red)
+rho =  Function(VV, name = "Design variable")
+rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
+rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 
 rho2 = Constant(0.5)
 rho3 = Constant(0.5)
@@ -73,7 +73,6 @@ omega = assemble(interpolate(Constant(1.0), V) * dx)
 
 delta = 1.0e-3
 epsilon = options.epsilon
-
 kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
 
@@ -135,8 +134,8 @@ def sigma_r(u, Id):
 
 # Define test function and beam displacement
 v = TestFunction(VV)
-u = Function(VV)
-p = Function(VV)
+u = Function(VV, name = "Displacement")
+p = Function(VV, name = "Adjoint variable")
 
 # The left side of the beam is clamped
 bcs = DirichletBC(VV, Constant((0, 0)), 7)
@@ -195,7 +194,7 @@ def FormObjectiveGradient(tao, x, G):
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
 		File(options.output + '/rho-{}.pvd'.format(i)).write(rho_i)
-		#File(options.output + '/u-{}.pvd'.format(i)).write(u)
+		File(options.output + '/u-{}.pvd'.format(i)).write(u)
 
 
 	with rho.dat.vec as rho_vec:
