@@ -195,6 +195,7 @@ def FormObjectiveGradient(tao, x, G):
 		rho_i = interpolate(rho_i, V)
 		File(options.output + '/rho-{}.pvd'.format(i)).write(rho_i)
 		File(options.output + '/u-{}.pvd'.format(i)).write(u)
+		File(options.output + '/beam-{}.pvd'.format(i)).write(rho, u)
 
 
 	with rho.dat.vec as rho_vec:
@@ -273,13 +274,15 @@ tao.destroy()
 with rho.dat.vec as rho_vec:
 	rho_vec = x.copy()
 
-rho_final = Function(V)
+# Saving files for viewing with Paraview
+rho_final = Function(V, name = "Design variable")
 rho_final = rho.sub(1) - rho.sub(0)
 rho_final = interpolate(rho_final, V)
 File(options.output + '/rho-final.pvd').write(rho_final)
 File(options.output + '/rho-final-rho2.pvd').write(rho.sub(0))
 File(options.output + '/rho-final-rho3.pvd').write(rho.sub(1))
 File(options.output + '/u.pvd').write(u)
+File(options.output + '/beam.pvd').write(rho, u)
 
 end = time.time()
 print("\nExecution time (in seconds):", (end - start))
