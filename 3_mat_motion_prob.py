@@ -47,8 +47,11 @@ rho =  Function(VV, name = "Design variable")
 rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
 rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 
-rho2 = Constant(0.5)
-rho3 = Constant(0.5)
+x, y = SpatialCoordinate(mesh)
+# rho2 = Constant(0.5)
+# rho3 = Constant(0.5)
+rho2 = 0.75 + 0.75*sin(4*pi*x)*sin(8*pi*y)
+rho3 = 0.5 + 0.5*sin(4*pi*x)*sin(8*pi*y)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -193,9 +196,9 @@ def FormObjectiveGradient(tao, x, G):
 		rho_i = Function(V)
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
-		File(options.output + '/rho-{}.pvd'.format(i)).write(rho_i)
-		File(options.output + '/u-{}.pvd'.format(i)).write(u)
-		File(options.output + '/beam-{}.pvd'.format(i)).write(rho, u)
+		# File(options.output + '/rho-{}.pvd'.format(i)).write(rho_i)
+		# File(options.output + '/u-{}.pvd'.format(i)).write(u)
+		File(options.output + '/beam-{}.pvd'.format(i)).write(rho_i, u)
 
 
 	with rho.dat.vec as rho_vec:
@@ -281,8 +284,8 @@ rho_final = interpolate(rho_final, V)
 File(options.output + '/rho-final.pvd').write(rho_final)
 File(options.output + '/rho-final-rho2.pvd').write(rho.sub(0))
 File(options.output + '/rho-final-rho3.pvd').write(rho.sub(1))
-File(options.output + '/u.pvd').write(u)
-File(options.output + '/beam.pvd').write(rho, u)
+File(options.output + '/displacement.pvd').write(u)
+File(options.output + '/beam-final.pvd').write(rho_final, u)
 
 end = time.time()
 print("\nExecution time (in seconds):", (end - start))
