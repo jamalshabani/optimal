@@ -51,7 +51,7 @@ x, y = SpatialCoordinate(mesh)
 # rho2 = Constant(0.5)
 # rho3 = Constant(0.5)
 rho2 = 0.75 + 0.75*sin(4*pi*x)*sin(8*pi*y)
-rho3 = 0.5 + 0.5*sin(4*pi*x)*sin(8*pi*y)
+rho3 = Constant(0.5)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
