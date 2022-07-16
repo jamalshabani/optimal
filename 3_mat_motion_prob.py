@@ -50,8 +50,8 @@ rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 x, y = SpatialCoordinate(mesh)
 # rho2 = Constant(0.5)
 # rho3 = Constant(0.5)
-rho2 = 0.75 + 0.75*sin(4*pi*x)*sin(8*pi*y)
-rho3 = Constant(0.5)
+rho2 = 0.75 + 0.75*sin(4*pi*x)*cos(4*pi*y)
+rho3 = 0.5 + 0.5*sin(4*pi*x)*cos(4*pi*y)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -192,7 +192,7 @@ R_adj = a_adjoint - L_adjoint
 def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
-	if (i%10) == 0:
+	if (i%50) == 0:
 		rho_i = Function(V)
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
