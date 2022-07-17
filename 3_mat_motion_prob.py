@@ -40,8 +40,8 @@ VV = VectorFunctionSpace(mesh, 'CG', 1, dim = 2)
 mesh_coordinates = mesh.coordinates.dat.data[:]
 
 M = len(mesh_coordinates)
-rho2_array = np.ones(M)
-rho3_array = np.zeros(M)
+rho2_array = np.ones(M) # Blue material
+rho3_array = np.zeros(M) # Red material
 
 rho =  Function(VV, name = "Design variable")
 rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
