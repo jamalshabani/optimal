@@ -4,6 +4,9 @@ def parse():
 	parser.add_argument('-tao_type', '--tao_type', type = str, default = 'blmvm', help = 'TAO algorithm type')
 	parser.add_argument('-tao_monitor', '--tao_monitor', action='store_true', help = 'TAO monitor')
 	parser.add_argument('-tao_max_it', '--tao_max_it', type = int, default = 100, help = 'Number of TAO iterations')
+	parser.add_argument('-tao_gatol', '--tao_gatol', type = float, default = 1.0e-7, help = 'Stop if norm of gradient is less than this')
+	parser.add_argument('-tao_grtol', '--tao_grtol', type = float, default = 1.0e-7, help = 'Stop if relative norm of gradient is less than this')
+	parser.add_argument('-tao_gttol', '--tao_gttol', type = float, default = 1.0e-7, help = 'Stop if norm of gradient is reduced by this factor')
 	parser.add_argument('-ls', '--lagrange_s', type = float, default = 1.0, help = 'Lagrange multiplier for structural material')
 	parser.add_argument('-lr', '--lagrange_r', type = float, default = 0.1, help = 'Lagrange multiplier for responsive material')
 	parser.add_argument('-vs', '--volume_s', type = float, default = 0.4, help = 'Volume percentage for structural material')
@@ -50,8 +53,8 @@ rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 x, y = SpatialCoordinate(mesh)
 # rho2 = Constant(0.5)
 # rho3 = Constant(0.5)
-rho2 = 0.75 + 0.75*sin(4*pi*x)*cos(4*pi*y)
-rho3 = 0.5 + 0.5*sin(4*pi*x)*cos(4*pi*y)
+rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
+rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -79,8 +82,8 @@ epsilon = options.epsilon
 kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
 
-f = Constant((0, -1))
-u_star = Constant((0, 1))
+f = Constant((0, -1.0))
+u_star = Constant((0, 1.0))
 
 # Young's modulus of the beam and poisson ratio
 E_v = delta

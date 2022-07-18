@@ -1,4 +1,4 @@
-rho2 = 0.75 + 0.75*sin(4*pi*x)*cos(4*pi*y)
-rho3 = 0.5 + 0.5*sin(4*pi*x)*cos(4*pi*y)
+rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
+rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
 
-python3 3_mat_motion_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -lr 2.6 -ls 0.160 -m 'motion_mesh.msh' -o 'test1' -er 1.0 -es 1.0e-2 -k 2.2e-3 -e 4.0e-3 -p 2.0
+python3 3_mat_motion_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -tao_grtol 1e-7 -tao_gttol 1e-7 -lr 2.6 -ls 0.160 -m 'motion_mesh2.msh' -o 'test1' -er 1.0 -es 1.0e-2 -k 2.2e-3 -e 4.0e-3 -p 2.0
