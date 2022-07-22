@@ -54,6 +54,7 @@ for i in range(len(r)):
 			rho_array[j] = temp
 
 rho = Function(V)
+# rho = Constant(0.5)
 rho.dat.data[:] = rho_array
 x, y = SpatialCoordinate(mesh)
 rho = interpolate(rho, V)
