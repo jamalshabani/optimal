@@ -82,7 +82,7 @@ epsilon = options.epsilon
 kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
 
-f = Constant((0, 0.0))
+f = Constant((0, -1.0))
 u_star = Constant((0, -1.0))
 
 # Young's modulus of the beam and poisson ratio
@@ -175,7 +175,7 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward = h_r(rho) * inner(sigma_star(Id), epsilon(v)) * dx
+L_forward = h_r(rho) * inner(sigma_star(Id), epsilon(v)) * dx + inner(f, v) * ds(8)
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -184,7 +184,7 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = h_r(rho) * inner(sigma_star(Id), epsilon(p)) * dx
+L_lagrange = h_r(rho) * inner(sigma_star(Id), epsilon(p)) * dx + inner(f, p) * ds(8)
 R_lagrange = a_lagrange - L_lagrange
 L = JJ - R_lagrange
 
