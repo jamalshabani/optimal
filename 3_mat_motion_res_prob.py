@@ -51,10 +51,10 @@ rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
 rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 
 x, y = SpatialCoordinate(mesh)
-rho2 = Constant(0.4)
-rho3 = Constant(0.4)
-# rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
-# rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
+# rho2 = Constant(0.4)
+# rho3 = Constant(0.4)
+rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
+rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -82,8 +82,8 @@ epsilon = options.epsilon
 kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
 
-f = Constant((0, -1.0))
-u_star = Constant((0, -1.0))
+f = Constant((0, -1))
+u_star = Constant((0, 1))
 
 # Young's modulus of the beam and poisson ratio
 E_v = delta
@@ -131,7 +131,7 @@ def epsilon(u):
 
 # Residual strain
 e1 = as_vector((1, 0))
-epsilon_star =  0.5 * (Id - 2 * outer(e1, e1))
+epsilon_star =  Id - 2 * outer(e1, e1)
 
 def sigma_star(Id):
 	return lambda_r * tr(epsilon_star) * Id + 2 * mu_r * epsilon_star
@@ -162,7 +162,7 @@ func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func2_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 
 func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3)
-func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Responsive material 1(Blue)
+func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Structural material 1(Blue)
 func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
 # Objective function + Modica-Mortola functional + Volume constraint
