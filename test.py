@@ -2,7 +2,12 @@ import subprocess
 
 # Ratio Er/Es = 10.0
 program_list = ["rm -rf test1", "rm -rf test2", "rm -rf test3",
-                "python3 3_mat_motion_res_prob.py -tao_type blmvm -tao_monitor -tao_max_it 500 -tao_gatol 1e-7 -tao_grtol 1e-7 -tao_gttol 1e-7 -lr 2.0 -ls 0.17 -m 'motion_mesh.msh' -o 'test1' -er 1.0 -es 1.0e-2 -k 2.2e-3 -e 4.0e-3 -p 2.0"]
+                "python3 3_mat_motion_res_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -tao_grtol 1e-7 -tao_gttol 1e-7 -lr 2.0 -ls 0.1 -m 'motion_mesh.msh' -o 'test1' -er 1.0 -es 1.0e-2 -k 1.0e-3 -e 4.0e-3 -p 2.0",
+                "python3 3_mat_motion_res_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -tao_grtol 1e-7 -tao_gttol 1e-7 -lr 2.0 -ls 0.1 -m 'motion_mesh.msh' -o 'test2' -er 1.0 -es 1.0e-2 -k 1.2e-3 -e 4.0e-3 -p 2.0",
+                "python3 3_mat_motion_res_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -tao_grtol 1e-7 -tao_gttol 1e-7 -lr 2.0 -ls 0.1 -m 'motion_mesh.msh' -o 'test3' -er 1.0 -es 1.0e-2 -k 1.4e-3 -e 4.0e-3 -p 2.0",
+                "python3 3_mat_motion_res_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -tao_grtol 1e-7 -tao_gttol 1e-7 -lr 2.0 -ls 0.1 -m 'motion_mesh.msh' -o 'test4' -er 1.0 -es 1.0e-2 -k 1.6e-3 -e 4.0e-3 -p 2.0",
+                "python3 3_mat_motion_res_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -tao_grtol 1e-7 -tao_gttol 1e-7 -lr 2.0 -ls 0.1 -m 'motion_mesh.msh' -o 'test5' -er 1.0 -es 1.0e-2 -k 1.8e-3 -e 4.0e-3 -p 2.0",
+                "python3 3_mat_motion_res_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -tao_grtol 1e-7 -tao_gttol 1e-7 -lr 2.0 -ls 0.1 -m 'motion_mesh.msh' -o 'test6' -er 1.0 -es 1.0e-2 -k 2.0e-3 -e 4.0e-3 -p 2.0"]
                 #"python3 3_mat_motion_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -lr 2.8 -ls 0.160 -m 'motion_mesh.msh' -o 'test2' -er 1.0 -es 1.0e-2 -k 2.2e-3 -e 4.0e-3 -p 2.0",
                 #"python3 3_mat_motion_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -lr 3.0 -ls 0.160 -m 'motion_mesh.msh' -o 'test3' -er 1.0 -es 1.0e-2 -k 2.2e-3 -e 4.0e-3 -p 2.0"]
 
