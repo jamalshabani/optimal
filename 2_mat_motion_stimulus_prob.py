@@ -37,11 +37,18 @@ Id = Identity(mesh.geometric_dimension()) #Identity tensor
 V = FunctionSpace(mesh, 'CG', 1)
 VV = VectorFunctionSpace(mesh, 'CG', 1)
 
-# Initial Design
+mesh_coordinates = mesh.coordinates.dat.data[:]
+
+M = len(mesh_coordinates)
+print(M)
+
+# Initial Design and stimulus
 rho = Function(V)
 # rho = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
+s = 1.0
 rho = Constant(0.4)
 rho = interpolate(rho, V)
+rhos = as_vector([rho, s])
 File(options.output + '/rho_initial.pvd').write(rho)
 ###### End Initial Design #####
 
@@ -76,33 +83,43 @@ mu_r = E_r/(2 * (1 + nu))
 lambda_r = (E_r * nu)/((1 + nu) * (1 - 2 * nu))
 
 
-def v_s(rho):
-	return (1 - rho)
+def v_s(rhos):
+	return (1 - rho.sub(0))
 
-def v_r(rho):
-	return rho
+def v_r(rhos):
+	return rho.sub(0)
+
+def a_s(rhos):
+	return 2 * pow(rhos.sub(1)) - 1
+
+def b_s(rhos):
+	return 2 * rhos.sub(1) * sqrt((1 - rhos.sub(1)))
 
 # Define h(x)=x^p where p >=2
-def h_s(rho):
-	return pow((1 - rho), options.power_p)
+def h_s(rhos):
+	return pow((1 - rho.sub(0)), options.power_p)
 
 # Define h(x)=x^p where p >=2
-def h_r(rho):
-	return pow(rho, options.power_p)
+def h_r(rhos):
+	return pow(rho.sub(0), options.power_p)
 
 # Define W(x) function
-def W(rho):
-	return rho * (1 - rho)
+def W(rhos):
+	return rho.sub(0) * (1 - rho.sub(0))
 
 # Define stress and strain tensors
 def epsilon(u):
 	return 0.5 * (grad(u) + grad(u).T)
 
 # Residual strain
-epsilon_star =  -1 * outer(e1, e1) + outer(e2, e2)
+A = outer(e1, e1) - outer(e2, e2)
+B = outer(e1, e2) + outer(e2, e1)
 
-def sigma_star(Id):
-	return lambda_r * tr(epsilon_star) * Id + 2 * mu_r * epsilon_star
+def sigma_A(A, Id):
+	return lambda_r * tr(A) * Id + 2 * mu_r * A
+
+def sigma_B(B, Id):
+	return lambda_r * tr(B) * Id + 2 * mu_r * B
 
 def sigma_s(u, Id):
 	return lambda_s * tr(epsilon(u)) * Id + 2 * mu_s * epsilon(u)
@@ -120,37 +137,41 @@ bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
 J = 0.5 * inner(u - u_star, u - u_star) * dx(4)
-func1 = kappa_d_e * W(rho) * dx
+func1 = kappa_d_e * W(rhos) * dx
 
-func2_sub1 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
-func2_sub2 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
+func2_sub1 = inner(grad(v_s(rhos)), grad(v_s(rhos))) * dx
+func2_sub2 = inner(grad(v_r(rhos)), grad(v_r(rhos))) * dx
 
 func2 = kappa_m_e * (func2_sub1 + func2_sub2)
-func3 = lagrange * (v_r(rho) - volume * omega) * dx
+func3 = lagrange * (v_r(rhos) - volume * omega) * dx
 
 JJ = J + func1 + func2 + func3
 
 # Define the weak form for forward PDE
-a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
-a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
-a_forward = a_forward_s + a_forward_r
+a_forward_s = h_s(rhos) * inner(sigma_s(u, Id), epsilon(v)) * dx
+a_forward_r = h_r(rhos) * inner(sigma_r(u, Id), epsilon(v)) * dx
+a_forward_A = a_s(rhos) * h_r(rhos) * sigma_A(A, Id) * epsilon(v) * dx
+a_forward_B = a_b(rhos) * h_r(rhos) * sigma_B(B, Id) * epsilon(v) * dx
+a_forward = a_forward_s + a_forward_r + a_forward_A + a_forward_B
 
-L_forward = h_r(rho) * inner(sigma_star(Id), epsilon(v)) * dx
+L_forward = inner(f, v) * ds(8)
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
-a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
-a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
-a_lagrange   = a_lagrange_s + a_lagrange_r
+a_lagrange_s = h_s(rhos) * inner(sigma_s(u, Id), epsilon(p)) * dx
+a_lagrange_r = h_r(rhos) * inner(sigma_r(u, Id), epsilon(p)) * dx
+a_lagrange_A = a_s(rhos) * h_r(rhos) * sigma_A(A, Id) * epsilon(p) * dx
+a_lagrange_B = a_b(rhos) * h_r(rhos) * sigma_B(B, Id) * epsilon(p) * dx
+a_lagrange   = a_lagrange_s + a_lagrange_r + a_lagrange_A + a_lagrange_B
 
-L_lagrange = h_r(rho) * inner(sigma_star(Id), epsilon(p)) * dx
+L_lagrange = inner(f, p) * ds(8)
 R_lagrange = a_lagrange - L_lagrange
 L = JJ + R_lagrange
 
 
 # Define the weak form for adjoint PDE
-a_adjoint_s = h_s(rho) * inner(sigma_s(v, Id), epsilon(p)) * dx
-a_adjoint_r = h_r(rho) * inner(sigma_r(v, Id), epsilon(p)) * dx
+a_adjoint_s = h_s(rhos) * inner(sigma_s(v, Id), epsilon(p)) * dx
+a_adjoint_r = h_r(rhos) * inner(sigma_r(v, Id), epsilon(p)) * dx
 a_adjoint = a_adjoint_s + a_adjoint_r
 
 L_adjoint = inner(u - u_star, v) * dx(4)
@@ -161,16 +182,16 @@ def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
 	if (i%10) == 0:
-		File(options.output + '/beam-{}.pvd'.format(i)).write(rho, u)
+		File(options.output + '/beam-{}.pvd'.format(i)).write(rhos.sub(0), u)
 
 	objective_value = assemble(J)
 	print("The value of objective function is {}".format(objective_value))
 
-	volume_fraction = assemble(rho * dx) * 3
+	volume_fraction = assemble(rhos.sub(0) * dx) * 3
 	print("The volume fraction(Vr) is {}".format(volume_fraction))
 	print(" ")
 
-	with rho.dat.vec as rho_vec:
+	with rhos.dat.vec as rho_vec:
 		rho_vec.set(0.0)
 		rho_vec.axpy(1.0, x)
 
@@ -210,6 +231,7 @@ tao.setFromOptions()
 # Initial design guess
 with rho.dat.vec as rho_vec:
 	x = rho_vec.copy()
+print(x.view())
 
 # Solve the optimization problem
 tao.solve(x)
