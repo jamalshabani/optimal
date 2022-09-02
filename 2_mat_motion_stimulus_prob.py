@@ -205,19 +205,40 @@ def FormObjectiveGradient(tao, x, G):
 	# Solve adjoint PDE
 	solve(R_adj == 0, p, bcs = bcs)
 
-	dJdrho = assemble(derivative(L, rho))
-	with dJdrho.dat.vec as dJdrho_vec:
-		G.set(0.0)
-		G.axpy(1.0, dJdrho_vec)
+	dJdrho = assemble(derivative(L, rhos.sub(0)))
+	dJds = assemble(derivative(L, rhos.sub(1)))
+
+	dJdrho_array = dJdrho.vector().array()
+	dJds_array = dJds.vector().array()
+
+	# print(dJdrho2_array)
+
+	N = M * 2
+	index_rho = []
+	index_s = []
+
+	for i in range(N):
+		if (i%2) == 0:
+			index_rho.append(i)
+		if (i%2) == 1:
+			index_s.append(i)
+
+	G.setValues(index_rho, dJdrho_array)
+	G.setValues(index_s, dJds_array)
+
+	# dJdrho = assemble(derivative(L, rho))
+	# with dJdrho.dat.vec as dJdrho_vec:
+	# 	G.set(0.0)
+	# 	G.axpy(1.0, dJdrho_vec)
 
 	f_val = assemble(J)
 	return f_val
 
 # Setting lower and upper bounds
-lb = Constant(0)
-ub = Constant(1)
-lb = interpolate(lb, V)
-ub = interpolate(ub, V)
+lb = as_vector((0, 0))
+ub = as_vector((1, 1))
+lb = interpolate(lb, VV)
+ub = interpolate(ub, VV)
 
 with lb.dat.vec as lb_vec:
 	rho_lb = lb_vec
@@ -235,19 +256,25 @@ tao.setFromOptions()
 # Initial design guess
 with rhos.dat.vec as rhos_vec:
 	x = rhos_vec.copy()
-print(x.view())
 
 # Solve the optimization problem
 tao.solve(x)
 tao.destroy()
 
 # Recover the final solution
-with rho.dat.vec as rho_vec:
-	rho_vec = x.copy()
+with rhos.dat.vec as rhos_vec:
+	rhos_vec = x.copy()
 
-File(options.output + '/final-rho.pvd').write(rho)
+# Saving files for viewing with Paraview
+rho_final = Function(V, name = "Design variable")
+rho_final = rhos.sub(0)
+s_final = rhos.sub(1)
+rho_final = interpolate(rho_final, V)
+File(options.output + '/rho-final.pvd').write(rho_final)
+File(options.output + '/rho-final-rho.pvd').write(rho.sub(0))
+File(options.output + '/s-final.pvd').write(rho.sub(1))
 File(options.output + '/displacement.pvd').write(u)
-File(options.output + '/beam-final.pvd').write(rho, u)
+File(options.output + '/beam-final.pvd').write(rho_final, u)
 
 end = time.time()
 print("\nExecution time (in seconds):", (end - start))
