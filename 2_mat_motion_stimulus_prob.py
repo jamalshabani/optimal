@@ -49,6 +49,10 @@ s = 1.0
 rho = Constant(0.4)
 rho = interpolate(rho, V)
 rhos = as_vector([rho, s])
+rhos = interpolate(rhos, VV)
+print(type(rhos))
+print(type(rhos.sub(0)))
+print(type(rhos.sub(1)))
 File(options.output + '/rho_initial.pvd').write(rho)
 ###### End Initial Design #####
 
@@ -90,7 +94,7 @@ def v_r(rhos):
 	return rho.sub(0)
 
 def a_s(rhos):
-	return 2 * pow(rhos.sub(1)) - 1
+	return 2 * pow(rhos.sub(1), 2) - 1
 
 def b_s(rhos):
 	return 2 * rhos.sub(1) * sqrt((1 - rhos.sub(1)))
@@ -150,8 +154,8 @@ JJ = J + func1 + func2 + func3
 # Define the weak form for forward PDE
 a_forward_s = h_s(rhos) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rhos) * inner(sigma_r(u, Id), epsilon(v)) * dx
-a_forward_A = a_s(rhos) * h_r(rhos) * sigma_A(A, Id) * epsilon(v) * dx
-a_forward_B = a_b(rhos) * h_r(rhos) * sigma_B(B, Id) * epsilon(v) * dx
+a_forward_A = a_s(rhos) * h_r(rhos) * inner(sigma_A(A, Id), epsilon(v)) * dx
+a_forward_B = b_s(rhos) * h_r(rhos) * inner(sigma_B(B, Id), epsilon(v)) * dx
 a_forward = a_forward_s + a_forward_r + a_forward_A + a_forward_B
 
 L_forward = inner(f, v) * ds(8)
@@ -160,8 +164,8 @@ R_fwd = a_forward - L_forward
 # Define the Lagrangian
 a_lagrange_s = h_s(rhos) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rhos) * inner(sigma_r(u, Id), epsilon(p)) * dx
-a_lagrange_A = a_s(rhos) * h_r(rhos) * sigma_A(A, Id) * epsilon(p) * dx
-a_lagrange_B = a_b(rhos) * h_r(rhos) * sigma_B(B, Id) * epsilon(p) * dx
+a_lagrange_A = a_s(rhos) * h_r(rhos) * inner(sigma_A(A, Id), epsilon(p)) * dx
+a_lagrange_B = b_s(rhos) * h_r(rhos) * inner(sigma_B(B, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_s + a_lagrange_r + a_lagrange_A + a_lagrange_B
 
 L_lagrange = inner(f, p) * ds(8)
@@ -229,8 +233,8 @@ tao.setVariableBounds(rho_lb, rho_ub)
 tao.setFromOptions()
 
 # Initial design guess
-with rho.dat.vec as rho_vec:
-	x = rho_vec.copy()
+with rhos.dat.vec as rhos_vec:
+	x = rhos_vec.copy()
 print(x.view())
 
 # Solve the optimization problem
