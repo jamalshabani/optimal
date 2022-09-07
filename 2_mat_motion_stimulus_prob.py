@@ -13,7 +13,7 @@ def parse():
 	parser.add_argument('-k', '--kappa', type = float, default = 1.0e-2, help = 'Weight of Modica-Mortola')
 	parser.add_argument('-e', '--epsilon', type = float, default = 5.0e-3, help = 'Phase-field regularization parameter')
 	parser.add_argument('-o', '--output', type = str, default = 'output1', help = 'Output folder')
-	parser.add_argument('-m', '--mesh', type = str, default = 'main.msh', help = 'Dimensions of meshed beam')
+	parser.add_argument('-m', '--mesh', type = str, default = 'motion_mesh.msh', help = 'Dimensions of meshed beam')
 	parser.add_argument('-es', '--esmodulus', type = float, default = 0.1, help = 'Elastic Modulus for structural material')
 	parser.add_argument('-er', '--ermodulus', type = float, default = 1.0, help = 'Elastic Modulus for responsive material')
 	parser.add_argument('-p', '--power_p', type = float, default = 2.0, help = 'Power for elasticity interpolation')
@@ -40,19 +40,15 @@ VV = VectorFunctionSpace(mesh, 'CG', 1)
 mesh_coordinates = mesh.coordinates.dat.data[:]
 
 M = len(mesh_coordinates)
-print(M)
 
 # Initial Design and stimulus
 rho = Function(V)
 # rho = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
-s = 1.0
+s = Constant(1.0)
 rho = Constant(0.4)
 rho = interpolate(rho, V)
 rhos = as_vector([rho, s])
 rhos = interpolate(rhos, VV)
-print(type(rhos))
-print(type(rhos.sub(0)))
-print(type(rhos.sub(1)))
 File(options.output + '/rho_initial.pvd').write(rho)
 ###### End Initial Design #####
 
@@ -195,9 +191,9 @@ def FormObjectiveGradient(tao, x, G):
 	print("The volume fraction(Vr) is {}".format(volume_fraction))
 	print(" ")
 
-	with rhos.dat.vec as rho_vec:
-		rho_vec.set(0.0)
-		rho_vec.axpy(1.0, x)
+	with rhos.dat.vec as rhos_vec:
+		rhos_vec.set(0.0)
+		rhos_vec.axpy(1.0, x)
 
 	# Solve forward PDE
 	solve(R_fwd == 0, u, bcs = bcs)
@@ -233,6 +229,8 @@ def FormObjectiveGradient(tao, x, G):
 
 	f_val = assemble(J)
 	return f_val
+	print(f_val)
+
 
 # Setting lower and upper bounds
 lb = as_vector((0, 0))
