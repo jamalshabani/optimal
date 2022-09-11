@@ -41,8 +41,6 @@ rho = Function(V)
 # rho = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
 rho = Constant(0.4)
 rho = interpolate(rho, V)
-rho = as_vector([rho, s])
-rho = interpolate(rho, VV)
 File(options.output + '/rho_initial.pvd').write(rho)
 ###### End Initial Design #####
 
