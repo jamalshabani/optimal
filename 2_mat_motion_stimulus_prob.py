@@ -38,6 +38,7 @@ VV = VectorFunctionSpace(mesh, 'CG', 1)
 
 # Initial Design and stimulus
 rho = Function(V)
+x, y = SpatialCoordinate(mesh)
 # rho = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
 rho = Constant(0.4)
 rho = interpolate(rho, V)
@@ -63,7 +64,7 @@ u_star = Constant((0, 1))
 # Young's modulus of the beam and poisson ratio
 E_s = options.esmodulus
 E_r = options.ermodulus
-nu = 0.3 #nu poisson ratio
+nu = 0.3 # Poisson ratio
 
 mu_s = E_s/(2 * (1 + nu))
 lambda_s = (E_s * nu)/((1 + nu) * (1 - 2 * nu))
@@ -95,8 +96,9 @@ def epsilon(u):
 	return 0.5 * (grad(u) + grad(u).T)
 
 # Residual strain
-a = as_vector((1, 0)) # Direction of responsive material
-epsilon_star =  Id - 2 * outer(a, a)
+s = Constant(1.0)
+e1 = as_vector((1, 0)) # Direction of responsive material
+epsilon_star =  Id - 2 * outer(e1, e1)
 
 def sigma_a(A, Id):
 	return lambda_r * tr(A) * Id + 2 * mu_r * A
@@ -160,12 +162,8 @@ def FormObjectiveGradient(tao, x, G):
 	if (i%10) == 0:
 		File(options.output + '/beam-{}.pvd'.format(i)).write(rho, u)
 
-	objective_value = assemble(J)
-	print("The value of objective function is {}".format(objective_value))
-
 	volume_fraction = assemble(rho * dx) * 3
-	print("The volume fraction(Vr) is {}".format(volume_fraction))
-	print(" ")
+	print("\nThe volume fraction(Vr) is {:0.6f}".format(volume_fraction))
 
 	with rho.dat.vec as rho_vec:
 		rho_vec.set(0.0)
@@ -182,7 +180,7 @@ def FormObjectiveGradient(tao, x, G):
 		G.set(0.0)
 		G.axpy(1.0, dJdrho_vec)
 
-	f_val = assemble(J)
+	f_val = assemble(JJ)
 	return f_val
 
 # Setting lower and upper bounds
@@ -221,6 +219,12 @@ rho_final = Function(V, name = "Design variable")
 File(options.output + '/rho-final.pvd').write(rho)
 File(options.output + '/displacement.pvd').write(u)
 File(options.output + '/beam-final.pvd').write(rho, u)
+print(" ")
+print("-------------------------------------------------------")
+
+objective_value = assemble(J)
+print("The final value of objective function is {:0.6f}".format(objective_value))
 
 end = time.time()
-print("\nExecution time (in seconds):", (end - start))
+print("\nExecution time (in seconds): {:0.6f}".format((end - start)))
+print(" ")
