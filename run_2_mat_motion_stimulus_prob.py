@@ -2,7 +2,7 @@ import subprocess
 
 # Ratio Er/Es = 10.0
 program_list = ["rm -rf test1", "rm -rf test2", "rm -rf test3",
-                "python3 2_mat_motion_stimulus_prob.py -tao_type blmvm -tao_monitor -tao_max_it 50 -tao_gatol 1e-7 -tao_grtol 1e-7 -tao_gttol 1e-7 -l 1.0e-2 -m 'motion_mesh.msh' -o 'test1' -er 1.0 -es 1.0e-2 -k 2.2e-3 -e 4.0e-3 -p 2.0"]
+                "python3 2_mat_motion_stimulus_prob.py -tao_type blmvm -tao_monitor -tao_max_it 100 -l 1.0 -m 'motion_mesh.msh' -o 'test1' -er 1.0 -es 1.0e-2 -k 2.2e-3 -e 4.0e-3 -p 1.0"]
                 #"python3 3_mat_motion_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -lr 2.8 -ls 0.160 -m 'motion_mesh.msh' -o 'test2' -er 1.0 -es 1.0e-2 -k 2.2e-3 -e 4.0e-3 -p 2.0",
                 #"python3 3_mat_motion_prob.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -lr 3.0 -ls 0.160 -m 'motion_mesh.msh' -o 'test3' -er 1.0 -es 1.0e-2 -k 2.2e-3 -e 4.0e-3 -p 2.0"]
 
