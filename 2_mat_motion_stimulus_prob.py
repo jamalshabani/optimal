@@ -177,11 +177,7 @@ def FormObjectiveGradient(tao, x, G):
 	# Solve adjoint PDE
 	solve(R_adj == 0, p, bcs = bcs)
 
-	# dJdrho = assemble(derivative(L, rho))
-	dJdrho1 = kappa_d_e * dW(rho) - 2 * kappa_m_e * grad(grad(rho))
-	dJdrho2 = options.power_p * pow((1 - rho), options.power_p - 1) * inner(sigma_s(u, Id), epsilon(p))
-	dJdrho3 = options.power_p * pow(rho, options.power_p - 1) * inner(sigma_r(u, Id), epsilon(p))
-	dJdrho = dJdrho1 - dJdrho2 + dJdrho3
+	dJdrho = assemble(derivative(L, rho))
 	with dJdrho.dat.vec as dJdrho_vec:
 		G.set(0.0)
 		G.axpy(1.0, dJdrho_vec)
