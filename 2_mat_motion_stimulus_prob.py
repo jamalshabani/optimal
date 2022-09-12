@@ -60,9 +60,6 @@ kappa_m_e = kappa * epsilon / cw
 f = Constant((0, -1))
 u_star = Constant((0, 1))
 
-e1 = as_vector((1, 0))
-e2 = as_vector((0, 1))
-
 # Young's modulus of the beam and poisson ratio
 E_s = options.esmodulus
 E_r = options.ermodulus
@@ -93,13 +90,16 @@ def h_r(rho):
 def W(rho):
 	return rho * (1 - rho)
 
-# Define W'(x)
-def dW(rho):
-	return (1 - 2 * rho)
-
 # Define stress and strain tensors
 def epsilon(u):
 	return 0.5 * (grad(u) + grad(u).T)
+
+# Residual strain
+a = as_vector((1, 0)) # Direction of responsive material
+epsilon_star =  Id - 2 * outer(a, a)
+
+def sigma_a(A, Id):
+	return lambda_r * tr(A) * Id + 2 * mu_r * A
 
 def sigma_s(u, Id):
 	return lambda_s * tr(epsilon(u)) * Id + 2 * mu_s * epsilon(u)
@@ -132,7 +132,7 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_s + a_forward_r
 
-L_forward = inner(f, v) * ds(8)
+L_forward = inner(f, v) * ds(8) + h_r(rho) * inner(sigma_a(epsilon_star, Id), epsilon(v)) * dx
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -140,7 +140,7 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_s + a_lagrange_r
 
-L_lagrange = inner(f, p) * ds(8)
+L_lagrange = inner(f, p) * ds(8) + h_r(rho) * inner(sigma_a(epsilon_star, Id), epsilon(p)) * dx
 R_lagrange = a_lagrange - L_lagrange
 L = JJ + R_lagrange
 
