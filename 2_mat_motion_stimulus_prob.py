@@ -34,7 +34,7 @@ Id = Identity(mesh.geometric_dimension()) #Identity tensor
 
 # Define the function spaces
 V = FunctionSpace(mesh, 'CG', 1)
-VV = VectorFunctionSpace(mesh, 'CG', 1)
+VV = VectorFunctionSpace(mesh, 'CG', 1, dim = 2)
 
 # Initial Design and stimulus
 rho = Function(V)
