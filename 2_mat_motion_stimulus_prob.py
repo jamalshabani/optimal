@@ -58,8 +58,8 @@ omega = assemble(interpolate(Constant(1.0), V) * dx)
 kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
 
-f = Constant((0, -1))
-u_star = Constant((0, 1))
+f = Constant((0, -1.0))
+u_star = Constant((0, 1.0))
 
 # Young's modulus of the beam and poisson ratio
 E_s = options.esmodulus
@@ -144,7 +144,7 @@ a_lagrange   = a_lagrange_s + a_lagrange_r
 
 L_lagrange = inner(f, p) * ds(8) + h_r(rho) * inner(sigma_a(epsilon_star, Id), epsilon(p)) * dx
 R_lagrange = a_lagrange - L_lagrange
-L = JJ + R_lagrange
+L = JJ - R_lagrange
 
 
 # Define the weak form for adjoint PDE
@@ -153,7 +153,7 @@ a_adjoint_r = h_r(rho) * inner(sigma_r(v, Id), epsilon(p)) * dx
 a_adjoint = a_adjoint_s + a_adjoint_r
 
 L_adjoint = inner(u - u_star, v) * dx(4)
-R_adj = a_adjoint + L_adjoint
+R_adj = a_adjoint - L_adjoint
 
 
 def FormObjectiveGradient(tao, x, G):
