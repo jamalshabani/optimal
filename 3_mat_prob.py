@@ -93,10 +93,10 @@ rho =  Function(VV)
 rho2 = Function(V)  # Structural materials
 rho3 = Function(V)  # Responsive materials
 
-rho2.dat.data[:] = rho2_array
+# rho2.dat.data[:] = rho2_array
 rho3.dat.data[:] = rho3_array
 
-# rho2 = Constant(0.4)
+rho2 = Constant(0.0)
 # rho3 = Constant(0.4)
 
 rho = as_vector([rho2, rho3])
@@ -257,7 +257,9 @@ def FormObjectiveGradient(tao, x, G):
 	G.setValues(index_2, dJdrho2_array)
 	G.setValues(index_3, dJdrho3_array)
 
-	f_val = assemble(J)
+	print(G.view())
+
+	f_val = assemble(L)
 	return f_val
 
 # Setting lower and upper bounds

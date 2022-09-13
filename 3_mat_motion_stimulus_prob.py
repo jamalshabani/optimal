@@ -51,9 +51,9 @@ rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
 rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 
 x, y = SpatialCoordinate(mesh)
-# rho2 = Constant(0.4)
+rho2 = Constant(0)
 # rho3 = Constant(0.4)
-rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
+# rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
 rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
 
 rho = as_vector([rho2, rho3])
@@ -161,7 +161,7 @@ func2_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func2_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 
-func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3)
+func2 = kappa_m_e * 0.5 * (func2_sub1 + func2_sub2 + func2_sub3)
 func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Structural material 1(Blue)
 func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
@@ -187,7 +187,7 @@ a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 L_lagrange = h_r(rho) * inner(sigma_star(Id), epsilon(p)) * dx + inner(f, p) * ds(8)
 R_lagrange = a_lagrange - L_lagrange
 L = JJ - R_lagrange
-
+LL = L - func3 - func4
 
 # Define the weak form for adjoint PDE
 a_adjoint_v = h_v(rho) * inner(sigma_v(v, Id), epsilon(p)) * dx
@@ -206,8 +206,6 @@ def FormObjectiveGradient(tao, x, G):
 		rho_i = Function(V)
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
-		# File(options.output + '/rho-{}.pvd'.format(i)).write(rho_i)
-		# File(options.output + '/u-{}.pvd'.format(i)).write(u)
 		File(options.output + '/beam-{}.pvd'.format(i)).write(rho_i, u)
 
 
@@ -231,13 +229,13 @@ def FormObjectiveGradient(tao, x, G):
 	print("The volume fraction(Vr) is {}".format(volume_r))
 	print(" ")
 
-	dJdrho2 = assemble(derivative(L, rho.sub(0)))
-	dJdrho3 = assemble(derivative(L, rho.sub(1)))
+	dJdrho2 = assemble(derivative(LL, rho.sub(0)))
+	dJdrho3 = assemble(derivative(LL, rho.sub(1)))
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
 
-	# print(dJdrho2_array)
+	print(dJdrho2_array)
 
 	N = M * 2
 	index_2 = []
