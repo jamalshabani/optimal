@@ -69,9 +69,9 @@ mesh_coordinates = mesh.coordinates.dat.data[:]
 # 	if (s > 0.03):
 # 		return 0
 #
-# M = len(mesh_coordinates)
-# rho2_array = np.ones(M)
-# rho3_array = np.zeros(M)
+M = len(mesh_coordinates)
+rho2_array = np.ones(M)
+rho3_array = np.zeros(M)
 #
 # for i in range(len(s)):
 # 	for j in range(M):
@@ -96,8 +96,8 @@ mesh_coordinates = mesh.coordinates.dat.data[:]
 # rho2.dat.data[:] = rho2_array
 # rho3.dat.data[:] = rho3_array
 
-rho2 = Constant(0.5)
-rho3 = Constant(0.4)
+rho2 = Constant(0.4)
+rho3 = Constant(0.5)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
