@@ -93,7 +93,7 @@ rho =  Function(VV)
 rho2 = Function(V)  # Structural materials
 rho3 = Function(V)  # Responsive materials
 
-# rho2.dat.data[:] = rho2_array
+#rho2.dat.data[:] = rho2_array
 rho3.dat.data[:] = rho3_array
 
 rho2 = Constant(0.0)
