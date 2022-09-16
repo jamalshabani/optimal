@@ -51,10 +51,10 @@ rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
 rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 
 x, y = SpatialCoordinate(mesh)
-rho2 = Constant(0)
-# rho3 = Constant(0.4)
+rho2 = Constant(0.4)
+rho3 = Constant(0.5)
 # rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
-rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
+# rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -82,8 +82,8 @@ epsilon = options.epsilon
 kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
 
-f = Constant((0, -1))
-u_star = Constant((0, 1))
+f = Constant((0, -1.0))
+u_star = Constant((0, 1.0))
 
 # Young's modulus of the beam and poisson ratio
 E_v = delta
@@ -129,13 +129,6 @@ def W(rho):
 def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
-# Residual strain
-e1 = as_vector((1, 0))
-epsilon_star =  Id - 2 * outer(e1, e1)
-
-def sigma_star(Id):
-	return lambda_r * tr(epsilon_star) * Id + 2 * mu_r * epsilon_star
-
 def sigma_v(u, Id):
     return lambda_v * tr(epsilon(u)) * Id + 2 * mu_v * epsilon(u)
 
@@ -161,8 +154,8 @@ func2_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func2_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 
-func2 = kappa_m_e * 0.5 * (func2_sub1 + func2_sub2 + func2_sub3)
-func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Structural material 1(Blue)
+func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3)
+func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Responsive material 1(Blue)
 func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
 # Objective function + Modica-Mortola functional + Volume constraint
@@ -175,7 +168,7 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward = h_r(rho) * inner(sigma_star(Id), epsilon(v)) * dx + inner(f, v) * ds(8)
+L_forward = inner(f, v) * ds(8)
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -184,10 +177,10 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = h_r(rho) * inner(sigma_star(Id), epsilon(p)) * dx + inner(f, p) * ds(8)
+L_lagrange = inner(f, p) * ds(8)
 R_lagrange = a_lagrange - L_lagrange
 L = JJ - R_lagrange
-LL = L - func3 - func4
+
 
 # Define the weak form for adjoint PDE
 a_adjoint_v = h_v(rho) * inner(sigma_v(v, Id), epsilon(p)) * dx
@@ -202,7 +195,7 @@ R_adj = a_adjoint - L_adjoint
 def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
-	if (i%10) == 0:
+	if (i%50) == 0:
 		rho_i = Function(V)
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
@@ -229,13 +222,13 @@ def FormObjectiveGradient(tao, x, G):
 	print("The volume fraction(Vr) is {}".format(volume_r))
 	print(" ")
 
-	dJdrho2 = assemble(derivative(LL, rho.sub(0)))
-	dJdrho3 = assemble(derivative(LL, rho.sub(1)))
+	dJdrho2 = assemble(derivative(L, rho.sub(0)))
+	dJdrho3 = assemble(derivative(L, rho.sub(1)))
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
 
-	print(dJdrho2_array)
+	# print(dJdrho2_array)
 
 	N = M * 2
 	index_2 = []
