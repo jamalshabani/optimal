@@ -38,6 +38,7 @@ Id = Identity(mesh.geometric_dimension()) #Identity tensor
 V = FunctionSpace(mesh, 'CG', 1)
 VV = VectorFunctionSpace(mesh, 'CG', 1, dim = 2)
 
+
 # Create initial design
 ###### Begin Initial Design #####
 mesh_coordinates = mesh.coordinates.dat.data[:]
@@ -129,6 +130,15 @@ def W(rho):
 def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
+# Stimulus initial guess
+e1 = as_vector((1, 0)) # Direction of responsive material
+S =  Id - 2 * outer(e1, e1)
+S_proj = project(S[1, 1], V)
+File(options.output + '/Stimulus.pvd').write(S_proj)
+
+def sigma_a(A, Id):
+	return lambda_r * tr(A) * Id + 2 * mu_r * A
+
 def sigma_v(u, Id):
     return lambda_v * tr(epsilon(u)) * Id + 2 * mu_v * epsilon(u)
 
@@ -168,7 +178,7 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward = inner(f, v) * ds(8)
+L_forward = inner(f, v) * ds(8) + h_r(rho) * inner(sigma_a(S, Id), epsilon(v)) * dx
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -177,7 +187,7 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = inner(f, p) * ds(8)
+L_lagrange = inner(f, p) * ds(8) + h_r(rho) * inner(sigma_a(S, Id), epsilon(p)) * dx
 R_lagrange = a_lagrange - L_lagrange
 L = JJ - R_lagrange
 
@@ -224,6 +234,21 @@ def FormObjectiveGradient(tao, x, G):
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
+	dJdS = -h_r(rho) * sigma_r(p, Id)
+	print(dJdS.geometric_dimension())
+	print(dJdS.ufl_shape)
+	dJdS00 = project(dJdS[0, 0], V)
+	dJdS01 = project(dJdS[0, 1], V)
+	dJdS10 = project(dJdS[1, 0], V)
+	dJdS11 = project(dJdS[1, 1], V)
+	File(options.output + '/dJdS00.pvd').write(dJdS00)
+	File(options.output + '/dJdS01.pvd').write(dJdS01)
+	File(options.output + '/dJdS10.pvd').write(dJdS10)
+	File(options.output + '/dJdS11.pvd').write(dJdS11)
+
+
+	# print(S.geometric_dimension())
+	# print(S[0,0])
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
