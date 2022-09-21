@@ -244,7 +244,8 @@ def FormObjectiveGradient(tao, x, G):
 	# Updating the Stimulus
 	S = updateStimulus(rho, p, Id)
 	S_i = project(S, T)
-	File(options.output + '/stimulus-{}.pvd'.format(i)).write(S_i)
+	if (i%50) == 0:
+		File(options.output + '/stimulus-{}.pvd'.format(i)).write(S_i)
 
 	# print(dJdS.geometric_dimension())
 	# print(dJdS.ufl_shape)
