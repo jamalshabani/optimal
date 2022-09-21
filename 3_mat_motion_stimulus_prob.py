@@ -133,8 +133,8 @@ def epsilon(u):
 # Stimulus initial guess
 e1 = as_vector((1, 0)) # Direction of responsive material
 S =  Id - 2 * outer(e1, e1)
-S_proj = project(S[1, 1], V)
-File(options.output + '/Stimulus.pvd').write(S_proj)
+# S_proj = project(S[1, 1], V)
+# File(options.output + '/Stimulus.pvd').write(S_proj)
 
 def sigma_a(A, Id):
 	return lambda_r * tr(A) * Id + 2 * mu_r * A
@@ -201,6 +201,11 @@ a_adjoint = a_adjoint_v + a_adjoint_s + a_adjoint_r
 L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
+def updateStimulus(rho, p, Id):
+	global S
+	dJdS = -h_r(rho) * sigma_r(p, Id)
+	S = S - delta * dJdS
+	return S
 
 def FormObjectiveGradient(tao, x, G):
 
@@ -235,16 +240,17 @@ def FormObjectiveGradient(tao, x, G):
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
 	dJdS = -h_r(rho) * sigma_r(p, Id)
-	print(dJdS.geometric_dimension())
-	print(dJdS.ufl_shape)
-	dJdS00 = project(dJdS[0, 0], V)
-	dJdS01 = project(dJdS[0, 1], V)
-	dJdS10 = project(dJdS[1, 0], V)
-	dJdS11 = project(dJdS[1, 1], V)
-	File(options.output + '/dJdS00.pvd').write(dJdS00)
-	File(options.output + '/dJdS01.pvd').write(dJdS01)
-	File(options.output + '/dJdS10.pvd').write(dJdS10)
-	File(options.output + '/dJdS11.pvd').write(dJdS11)
+	S = updateStimulus(rho, p, Id)
+	# print(dJdS.geometric_dimension())
+	# print(dJdS.ufl_shape)
+	# dJdS00 = project(dJdS[0, 0], V)
+	# dJdS01 = project(dJdS[0, 1], V)
+	# dJdS10 = project(dJdS[1, 0], V)
+	# dJdS11 = project(dJdS[1, 1], V)
+	# File(options.output + '/dJdS00.pvd').write(dJdS00)
+	# File(options.output + '/dJdS01.pvd').write(dJdS01)
+	# File(options.output + '/dJdS10.pvd').write(dJdS10)
+	# File(options.output + '/dJdS11.pvd').write(dJdS11)
 
 
 	# print(S.geometric_dimension())
