@@ -37,6 +37,7 @@ Id = Identity(mesh.geometric_dimension()) #Identity tensor
 # Define the function spaces
 V = FunctionSpace(mesh, 'CG', 1)
 VV = VectorFunctionSpace(mesh, 'CG', 1, dim = 2)
+T = TensorFunctionSpace(mesh, 'CG', 1)
 
 
 # Create initial design
@@ -133,8 +134,8 @@ def epsilon(u):
 # Stimulus initial guess
 e1 = as_vector((1, 0)) # Direction of responsive material
 S =  Id - 2 * outer(e1, e1)
-# S_proj = project(S[1, 1], V)
-# File(options.output + '/Stimulus.pvd').write(S_proj)
+S_initial = project(S, T)
+File(options.output + '/stimulus-initial.pvd').write(S_initial)
 
 def sigma_a(A, Id):
 	return lambda_r * tr(A) * Id + 2 * mu_r * A
@@ -239,8 +240,12 @@ def FormObjectiveGradient(tao, x, G):
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
-	dJdS = -h_r(rho) * sigma_r(p, Id)
+
+	# Updating the Stimulus
 	S = updateStimulus(rho, p, Id)
+	S_i = project(S, T)
+	File(options.output + '/stimulus-{}.pvd'.format(i)).write(S_i)
+
 	# print(dJdS.geometric_dimension())
 	# print(dJdS.ufl_shape)
 	# dJdS00 = project(dJdS[0, 0], V)
