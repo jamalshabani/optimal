@@ -32,7 +32,7 @@ import numpy as np
 start = time.time()
 
 # Import gmesh
-mesh = Mesh(options.mesh)
+mesh = Mesh("motion_mesh.msh")
 Id = Identity(mesh.geometric_dimension()) #Identity tensor
 
 # Define the function spaces
