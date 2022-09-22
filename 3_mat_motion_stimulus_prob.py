@@ -18,6 +18,7 @@ def parse():
 	parser.add_argument('-es', '--esmodulus', type = float, default = 0.1, help = 'Elastic Modulus for structural material')
 	parser.add_argument('-er', '--ermodulus', type = float, default = 1.0, help = 'Elastic Modulus for responsive material')
 	parser.add_argument('-p', '--power_p', type = float, default = 2.0, help = 'Power for elasticity interpolation')
+	parser.add_argument('-a', '--alpha', type = float, default = 1.0e-3, help = 'Step length for stimulus decent')
 	options = parser.parse_args()
 	return options
 
@@ -80,6 +81,7 @@ volume_r = options.lagrange_r
 omega = assemble(interpolate(Constant(1.0), V) * dx)
 
 delta = 1.0e-3
+alpha = options.alpha
 epsilon = options.epsilon
 kappa_d_e = kappa / (epsilon * cw)
 kappa_m_e = kappa * epsilon / cw
@@ -205,7 +207,7 @@ R_adj = a_adjoint - L_adjoint
 def updateStimulus(rho, p, Id):
 	global S
 	dJdS = -h_r(rho) * sigma_r(p, Id)
-	S = S - delta * dJdS
+	S = S - alpha * dJdS
 	return S
 
 def FormObjectiveGradient(tao, x, G):
