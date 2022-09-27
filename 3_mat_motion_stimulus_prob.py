@@ -70,30 +70,30 @@ File(options.output + '/rho_initial.pvd').write(rho_initial)
 ###### End Initial Design #####
 
 # Define the constant parameters used in the problem
-kappa = options.kappa
-cw = pi/8  # Normalization parameter
-lagrange_s = options.lagrange_s
-lagrange_r = options.lagrange_r
-volume_s = options.volume_s
-volume_r = options.lagrange_r
+kappa = Constant(options.kappa)
+cw = Constant(pi/8)  # Normalization parameter
+lagrange_s = Constant(options.lagrange_s)
+lagrange_r = Constant(options.lagrange_r)
+volume_s = Constant(options.volume_s)
+volume_r = Constant(options.lagrange_r)
 
 # Total volume of the domain |omega|
 omega = assemble(interpolate(Constant(1.0), V) * dx)
 
-delta = 1.0e-3
-alpha = options.alpha
-epsilon = options.epsilon
-kappa_d_e = kappa / (epsilon * cw)
-kappa_m_e = kappa * epsilon / cw
+delta = Constant(1.0e-3)
+alpha = Constant(options.alpha)
+epsilon = Constant(options.epsilon)
+kappa_d_e = Constant(kappa / (epsilon * cw))
+kappa_m_e = Constant(kappa * epsilon / cw)
 
 f = Constant((0, -1.0))
 u_star = Constant((0, 1.0))
 
 # Young's modulus of the beam and poisson ratio
-E_v = delta
-E_s = options.esmodulus
-E_r = options.ermodulus
-nu = 0.3 #nu poisson ratio
+E_v = Constant(delta)
+E_s = Constant(options.esmodulus)
+E_r = Constant(options.ermodulus)
+nu = Constant(0.3) #nu poisson ratio
 
 mu_v = E_v/(2 * (1 + nu))
 lambda_v = (E_v * nu)/((1 + nu) * (1 - 2 * nu))
@@ -134,7 +134,7 @@ def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
 # Stimulus initial guess
-e1 = as_vector((1, 0)) # Direction of responsive material
+e1 = Constant((1, 0)) # Direction of responsive material
 # S =  Id - 2 * outer(e1, e1)
 S =  Id - Id
 S_initial = project(S, T)
@@ -206,10 +206,9 @@ L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
 def updateStimulus(rho, p, Id):
-	global S
 	dJdS = -h_r(rho) * sigma_r(p, Id)
-	S = S - alpha * dJdS
-	return S
+	S_new = S - alpha * dJdS
+	return S_new
 
 def FormObjectiveGradient(tao, x, G):
 
