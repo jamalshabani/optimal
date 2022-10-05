@@ -135,9 +135,8 @@ def epsilon(u):
 
 # Stimulus initial guess
 e1 = Constant((1, 0)) # Direction of responsive material
-# S =  Id - 2 * outer(e1, e1)
+S =  Id - 2 * outer(e1, e1)
 # S =  Id
-S = Id
 S_initial = project(S, T)
 File(options.output + '/stimulus-initial.pvd').write(S_initial)
 
