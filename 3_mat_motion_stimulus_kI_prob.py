@@ -19,7 +19,7 @@ def parse():
 	parser.add_argument('-er', '--ermodulus', type = float, default = 1.0, help = 'Elastic Modulus for responsive material')
 	parser.add_argument('-p', '--power_p', type = float, default = 2.0, help = 'Power for elasticity interpolation')
 	parser.add_argument('-a', '--alpha', type = float, default = 1.0e-3, help = 'Step length for stimulus decent')
-    parser.add_argument('-s', '--steamy', type = float, default = 1.0, help = 'Initial factor of steamy')
+	parser.add_argument('-s', '--steamy', type = float, default = 1.0, help = 'Initial factor of steamy')
 	options = parser.parse_args()
 	return options
 
@@ -131,7 +131,7 @@ def W(rho):
 
 # Define stress and strain tensors
 def epsilon(u):
-    return 0.5 * (grad(u) + grad(u).T)
+	return 0.5 * (grad(u) + grad(u).T)
 
 # Stimulus initial guess
 S =  s * Id
@@ -142,13 +142,13 @@ def sigma_a(A, Id):
 	return lambda_r * tr(A) * Id + 2 * mu_r * A
 
 def sigma_v(u, Id):
-    return lambda_v * tr(epsilon(u)) * Id + 2 * mu_v * epsilon(u)
+	return lambda_v * tr(epsilon(u)) * Id + 2 * mu_v * epsilon(u)
 
 def sigma_s(u, Id):
-    return lambda_s * tr(epsilon(u)) * Id + 2 * mu_s * epsilon(u)
+	return lambda_s * tr(epsilon(u)) * Id + 2 * mu_s * epsilon(u)
 
 def sigma_r(u, Id):
-    return lambda_r * tr(epsilon(u)) * Id + 2 * mu_r * epsilon(u)
+	return lambda_r * tr(epsilon(u)) * Id + 2 * mu_r * epsilon(u)
 
 # Define test function and beam displacement
 v = TestFunction(VV)
@@ -204,9 +204,9 @@ L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
 def updateStimulus(rho, p, Id):
-	dJds = -h_r(rho) * inner(sigma_a(I, Id) * e(p))
-    print(dJds)
-    print(type(dJds))
+	dJds = -h_r(rho) * inner(sigma_a(Id, Id) * e(p))
+	print(dJds)
+	print(type(dJds))
 	s_new = s - alpha * dJds
 	return s_new
 
