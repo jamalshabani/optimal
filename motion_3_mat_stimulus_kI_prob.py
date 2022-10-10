@@ -44,29 +44,27 @@ VVV = VectorFunctionSpace(mesh, 'CG', 1, dim = 3)
 # Create initial design
 ###### Begin Initial Design #####
 mesh_coordinates = mesh.coordinates.dat.data[:]
-
 M = len(mesh_coordinates)
-rho2_array = np.ones(M) # Blue material
-rho3_array = np.zeros(M) # Red material
 
-rho =  Function(VV, name = "Design variable")
+rho =  Function(VVV, name = "Design variable")
 rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
 rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
+s = Function(V, name = "Stimulus factor sI")
 
 # Stimulus initial guess
-s = Constant(options.steamy)
-s_initial = project(s, V)
-File(options.output + '/stimulus-initial.pvd').write(s_initial)
+# s = Constant(options.steamy)
+# s_initial = project(s, V)
+# File(options.output + '/stimulus-initial.pvd').write(s_initial)
 
 x, y = SpatialCoordinate(mesh)
 rho2 = Constant(0.4)
 rho3 = Constant(0.5)
+s = Constant(1.0)
 # rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
 # rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
 
 rho = as_vector([rho2, rho3, s])
 rho = interpolate(rho, VVV)
-# print(rho)
 # print
 
 rho_initial = Function(V)
@@ -132,6 +130,9 @@ def h_s(rho):
 def h_r(rho):
 	return pow(rho.sub(1), options.power_p)
 
+def h_h(rho):
+	return pow(rho.sub(2), options.power_p)
+
 # Define W(x) function
 def W(rho):
 	return (rho.sub(0) + rho.sub(1)) * (1 - rho.sub(0)) * (1 - rho.sub(1))
@@ -183,7 +184,7 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward = inner(f, v) * ds(8) + h_r(rho) * inner(sigma_a(s * Id, Id), epsilon(v)) * dx
+L_forward = inner(f, v) * ds(8) + h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(v)) * dx
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -192,7 +193,7 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = inner(f, p) * ds(8) + h_r(rho) * inner(sigma_a(s * Id, Id), epsilon(p)) * dx
+L_lagrange = inner(f, p) * ds(8) + h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(p)) * dx
 R_lagrange = a_lagrange - L_lagrange
 L = JJ - R_lagrange
 
@@ -205,11 +206,6 @@ a_adjoint = a_adjoint_v + a_adjoint_s + a_adjoint_r
 
 L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
-
-def updateStimulus(rho, p, Id):
-	dJds = -h_r(rho) * inner(sigma_a(Id, Id), epsilon(p))
-	s_new = s - alpha * dJds
-	return s_new
 
 def FormObjectiveGradient(tao, x, G):
 
@@ -245,12 +241,7 @@ def FormObjectiveGradient(tao, x, G):
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
 	dJds = assemble(derivative(L, rho.sub(2)))
-
-	# Updating the Stimulus
-	s = updateStimulus(rho, p, Id)
-	s_i = project(s, V)
-	if (i%50) == 0:
-		File(options.output + '/stimulus-{}.pvd'.format(i)).write(s_i)
+	# dJds = project(dJds, V)
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
@@ -273,14 +264,16 @@ def FormObjectiveGradient(tao, x, G):
 	G.setValues(index_3, dJdrho3_array)
 	G.setValues(index_s, dJds_array)
 
+	# print(G.view())
+
 	f_val = assemble(JJ)
 	return f_val
 
 # Setting lower and upper bounds
-lb = as_vector((0, 0, -1.0e100))
-ub = as_vector((1, 1, 1.0e100))
-lb = interpolate(lb, VV)
-ub = interpolate(ub, VV)
+lb = as_vector((0, 0, -1e100))
+ub = as_vector((1, 1, 1e100))
+lb = interpolate(lb, VVV)
+ub = interpolate(ub, VVV)
 
 with lb.dat.vec as lb_vec:
 	rho_lb = lb_vec
