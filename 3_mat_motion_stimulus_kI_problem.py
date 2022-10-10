@@ -19,6 +19,7 @@ def parse():
 	parser.add_argument('-er', '--ermodulus', type = float, default = 1.0, help = 'Elastic Modulus for responsive material')
 	parser.add_argument('-p', '--power_p', type = float, default = 2.0, help = 'Power for elasticity interpolation')
 	parser.add_argument('-a', '--alpha', type = float, default = 1.0e-3, help = 'Step length for stimulus decent')
+    parser.add_argument('-s', '--steamy', type = float, default = 1.0, help = 'Initial factor of steamy')
 	options = parser.parse_args()
 	return options
 
@@ -54,10 +55,10 @@ rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
 rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 
 x, y = SpatialCoordinate(mesh)
-# rho2 = Constant(0.4)
-# rho3 = Constant(0.5)
-rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
-rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
+rho2 = Constant(0.4)
+rho3 = Constant(0.5)
+# rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
+# rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -82,6 +83,7 @@ omega = assemble(interpolate(Constant(1.0), V) * dx)
 
 delta = Constant(1.0e-3)
 alpha = Constant(options.alpha)
+s = Constant(options.steamy)
 epsilon = Constant(options.epsilon)
 kappa_d_e = Constant(kappa / (epsilon * cw))
 kappa_m_e = Constant(kappa * epsilon / cw)
@@ -134,10 +136,8 @@ def epsilon(u):
     return 0.5 * (grad(u) + grad(u).T)
 
 # Stimulus initial guess
-e1 = Constant((1, 0)) # Direction of responsive material
-S =  Id - 2 * outer(e1, e1)
-# S =  Id
-S_initial = project(S, T)
+S =  s * Id
+S_initial = project(S, T) # Change this to individual components
 File(options.output + '/stimulus-initial.pvd').write(S_initial)
 
 def sigma_a(A, Id):
@@ -206,8 +206,8 @@ L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
 def updateStimulus(rho, p, Id):
-	dJdS = -h_r(rho) * sigma_r(p, Id)
-	S_new = S - alpha * dJdS
+	dJds = -h_r(rho) * sigma_r(p, Id)
+	s_new = s - alpha * dJds
 	return S_new
 
 def FormObjectiveGradient(tao, x, G):
