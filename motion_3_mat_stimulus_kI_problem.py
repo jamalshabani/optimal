@@ -59,7 +59,7 @@ s = Function(V, name = "Stimulus factor sI")
 x, y = SpatialCoordinate(mesh)
 rho2 = Constant(0.4)
 rho3 = Constant(0.5)
-s = Constant(1.0)
+s = Constant(options.steamy)
 # rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
 # rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
 
@@ -241,7 +241,6 @@ def FormObjectiveGradient(tao, x, G):
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
 	dJds = assemble(derivative(L, rho.sub(2)))
-	# dJds = project(dJds, V)
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
@@ -264,13 +263,13 @@ def FormObjectiveGradient(tao, x, G):
 	G.setValues(index_3, dJdrho3_array)
 	G.setValues(index_s, dJds_array)
 
-	# print(G.view())
+	#print(G.view())
 
-	f_val = assemble(JJ)
+	f_val = assemble(L)
 	return f_val
 
 # Setting lower and upper bounds
-lb = as_vector((0, 0, -1e100))
+lb = as_vector((0, 0, 0))
 ub = as_vector((1, 1, 1e100))
 lb = interpolate(lb, VVV)
 ub = interpolate(ub, VVV)
