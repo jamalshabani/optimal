@@ -247,25 +247,8 @@ def FormObjectiveGradient(tao, x, G):
 	if (i%50) == 0:
 		File(options.output + '/stimulus-{}.pvd'.format(i)).write(s_i)
 
-	# print(dJdS.geometric_dimension())
-	# print(dJdS.ufl_shape)
-	# dJdS00 = project(dJdS[0, 0], V)
-	# dJdS01 = project(dJdS[0, 1], V)
-	# dJdS10 = project(dJdS[1, 0], V)
-	# dJdS11 = project(dJdS[1, 1], V)
-	# File(options.output + '/dJdS00.pvd').write(dJdS00)
-	# File(options.output + '/dJdS01.pvd').write(dJdS01)
-	# File(options.output + '/dJdS10.pvd').write(dJdS10)
-	# File(options.output + '/dJdS11.pvd').write(dJdS11)
-
-
-	# print(S.geometric_dimension())
-	# print(S[0,0])
-
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
-
-	# print(dJdrho2_array)
 
 	N = M * 2
 	index_2 = []
@@ -280,7 +263,6 @@ def FormObjectiveGradient(tao, x, G):
 	G.setValues(index_2, dJdrho2_array)
 	G.setValues(index_3, dJdrho3_array)
 
-	# print(G.view())
 	f_val = assemble(JJ)
 	return f_val
 
