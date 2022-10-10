@@ -206,7 +206,7 @@ L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
 def updateStimulus(rho, p, Id):
-	dJds = -h_r(rho) * sigma_r(p, Id)
+	dJds = -h_r(rho) * inner(sigma_a(I, Id) * e(p))
 	s_new = s - alpha * dJds
 	return S_new
 
