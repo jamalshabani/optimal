@@ -193,7 +193,7 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = inner(f, p) * ds(8) + h_r(rho) * inner(h_h(rho) * sigma_a(Id, Id), epsilon(p)) * dx
+L_lagrange = inner(f, p) * ds(8) + h_r(rho) * inner(sigma_a(h_h(rho) * Id, Id), epsilon(p)) * dx
 R_lagrange = a_lagrange - L_lagrange
 L = JJ - R_lagrange
 
