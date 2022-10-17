@@ -241,12 +241,16 @@ def FormObjectiveGradient(tao, x, G):
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
 	dJds = assemble(derivative(L, rho.sub(2)))
-	#dJds = -h_r(rho) * inner(sigma_a(Id, Id), epsilon(p))
-	#dJds = project(dJds, V)
+	# dJds2 = -h_r(rho) * inner(sigma_a(Id, Id), epsilon(p))
+	# dJds2 = project(dJds2, V)
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
 	dJds_array = dJds.vector().array()
+	# dJds2_array = dJds2.vector().array()
+
+	# print(dJds_array)
+	# print(dJds2_array)
 
 	N = M * 3
 	index_2 = []
@@ -265,7 +269,7 @@ def FormObjectiveGradient(tao, x, G):
 	G.setValues(index_3, dJdrho3_array)
 	G.setValues(index_s, dJds_array)
 
-	print(G.view())
+	# print(G.view())
 
 	f_val = assemble(L)
 	return f_val
