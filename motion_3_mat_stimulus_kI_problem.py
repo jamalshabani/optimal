@@ -131,7 +131,7 @@ def h_r(rho):
 	return pow(rho.sub(1), options.power_p)
 
 def h_h(rho):
-	return pow(rho.sub(2), 1)
+	return rho.sub(2)
 
 # Define W(x) function
 def W(rho):
@@ -184,7 +184,7 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward = inner(f, v) * ds(8) + h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(v)) * dx
+L_forward = inner(f, v) * ds(8) + h_r(rho) * inner(sigma_a(h_h(rho) * Id, Id), epsilon(v)) * dx
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -193,7 +193,7 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = inner(f, p) * ds(8) + h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(p)) * dx
+L_lagrange = inner(f, p) * ds(8) + h_r(rho) * inner(sigma_a(h_h(rho) * Id, Id), epsilon(p)) * dx
 R_lagrange = a_lagrange - L_lagrange
 L = JJ - R_lagrange
 
