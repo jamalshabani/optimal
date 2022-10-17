@@ -240,9 +240,9 @@ def FormObjectiveGradient(tao, x, G):
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
-	dJds = assemble(derivative(L, rho.sub(2)))
+	dJds = assemble(derivative(L, rho.sub(2))) * h_r(rho)
 	# dJds2 = -h_r(rho) * inner(sigma_a(Id, Id), epsilon(p))
-	# dJds2 = project(dJds2, V)
+	dJds = interpolate(dJds, V)
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
@@ -276,7 +276,7 @@ def FormObjectiveGradient(tao, x, G):
 
 # Setting lower and upper bounds
 lb = as_vector((0, 0, 0))
-ub = as_vector((1, 1, 1))
+ub = as_vector((1, 1, 2))
 lb = interpolate(lb, VVV)
 ub = interpolate(ub, VVV)
 
