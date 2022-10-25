@@ -210,12 +210,16 @@ R_adj = a_adjoint - L_adjoint
 def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
+	beam = File(options.output + '/beam.pvd')
+	stimulus = File(options.output + '/stimulus.pvd')
 	if (i%20) == 0:
 		rho_i = Function(V)
 		rho_i = rho.sub(1) - rho.sub(0)
 		rho_i = interpolate(rho_i, V)
-		File(options.output + '/beam-{}.pvd'.format(i)).write(rho_i, u)
-		File(options.output + '/stimulus-{}.pvd'.format(i)).write(rho.sub(2))
+		beam.write(rho_i, u, time = i)
+		stimulus.write(rho.sub(2), time = i)
+		# File(options.output + '/beam-{}.pvd'.format(i)).write(rho_i, u)
+		# File(options.output + '/stimulus-{}.pvd'.format(i)).write(rho.sub(2))
 
 
 	with rho.dat.vec as rho_vec:
