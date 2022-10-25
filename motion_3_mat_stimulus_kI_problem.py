@@ -47,6 +47,8 @@ mesh_coordinates = mesh.coordinates.dat.data[:]
 M = len(mesh_coordinates)
 
 rho =  Function(VVV, name = "Design variable")
+rho_i = Function(V, name = "Material density")
+stimulus =  Function(V, name = "Stimulus variable")
 rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
 rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 s = Function(V, name = "Stimulus factor sI")
@@ -207,18 +209,16 @@ a_adjoint = a_adjoint_v + a_adjoint_s + a_adjoint_r
 L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
-stimulus = File(options.output + '/stimulus.pvd')
 beam = File(options.output + '/beam.pvd')
 
 def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
 	if (i%10) == 0:
-		rho_i = Function(V)
-		rho_i = rho.sub(1) - rho.sub(0)
-		rho_i = project(rho_i, V)
-		beam.write(rho_i, u, time = i)
-		stimulus.write(rho.sub(2), time = i)
+		rho_i.interpolate(rho.sub(1) - rho.sub(0))
+		stimulus.interpolate(rho.sub(2))
+		beam.write(rho_i, stimulus, u, time = i)
+		# stimulus.write(stimulus, time = i)
 		# File(options.output + '/beam-{}.pvd'.format(i)).write(rho_i, u)
 		# File(options.output + '/stimulus-{}.pvd'.format(i)).write(rho.sub(2))
 
