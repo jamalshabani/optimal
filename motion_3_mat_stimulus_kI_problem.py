@@ -94,7 +94,7 @@ kappa_d_e = Constant(kappa / (epsilon * cw))
 kappa_m_e = Constant(kappa * epsilon / cw)
 
 f = Constant((0, -1.0))
-u_star = Constant((0, 1.0))
+u_star = Constant((0, 2/9))
 
 # Young's modulus of the beam and poisson ratio
 E_v = Constant(delta)
@@ -186,7 +186,7 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward = inner(f, v) * ds(8) + h_r(rho) * inner(sigma_a(h_h(rho) * Id, Id), epsilon(v)) * dx
+L_forward = inner(f, v) * ds(8) + h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(v)) * dx
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -195,7 +195,7 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = inner(f, p) * ds(8) + h_r(rho) * inner(sigma_a(h_h(rho) * Id, Id), epsilon(p)) * dx
+L_lagrange = inner(f, p) * ds(8) + h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(p)) * dx
 R_lagrange = a_lagrange - L_lagrange
 L = JJ - R_lagrange
 
@@ -214,7 +214,7 @@ beam = File(options.output + '/beam.pvd')
 def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
-	if (i%10) == 0:
+	if (i%20) == 0:
 		rho_i.interpolate(rho.sub(1) - rho.sub(0))
 		stimulus.interpolate(rho.sub(2))
 		beam.write(rho_i, stimulus, u, time = i)
@@ -245,17 +245,11 @@ def FormObjectiveGradient(tao, x, G):
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
-	dJds = assemble(derivative(L, rho.sub(2))) * h_r(rho)
-	# dJds2 = -h_r(rho) * inner(sigma_a(Id, Id), epsilon(p))
-	dJds = interpolate(dJds, V)
+	dJds = assemble(derivative(L, rho.sub(2)))
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
 	dJds_array = dJds.vector().array()
-	# dJds2_array = dJds2.vector().array()
-
-	# print(dJds_array)
-	# print(dJds2_array)
 
 	N = M * 3
 	index_2 = []
@@ -280,8 +274,8 @@ def FormObjectiveGradient(tao, x, G):
 	return f_val
 
 # Setting lower and upper bounds
-lb = as_vector((0, 0, 0))
-ub = as_vector((1, 1, 2))
+lb = as_vector((0, 0, -1))
+ub = as_vector((1, 1, 1))
 lb = interpolate(lb, VVV)
 ub = interpolate(ub, VVV)
 
