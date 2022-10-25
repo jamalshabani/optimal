@@ -314,11 +314,6 @@ with rho.dat.vec as rho_vec:
 rho_final = Function(V, name = "Design variable")
 rho_final = rho.sub(1) - rho.sub(0)
 rho_final = interpolate(rho_final, V)
-
-File(options.output + '/rho-final-rho2.pvd').write(rho.sub(0))
-File(options.output + '/rho-final-rho3.pvd').write(rho.sub(1))
-File(options.output + '/rho-s.pvd').write(rho.sub(2))
-File(options.output + '/displacement.pvd').write(u)
 File(options.output + '/beam-final.pvd').write(rho_final, u)
 
 end = time.time()
