@@ -207,15 +207,16 @@ a_adjoint = a_adjoint_v + a_adjoint_s + a_adjoint_r
 L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
+stimulus = File(options.output + '/stimulus.pvd')
+beam = File(options.output + '/beam.pvd')
+
 def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
-	beam = File(options.output + '/beam.pvd')
-	stimulus = File(options.output + '/stimulus.pvd')
-	if (i%20) == 0:
+	if (i%10) == 0:
 		rho_i = Function(V)
 		rho_i = rho.sub(1) - rho.sub(0)
-		rho_i = interpolate(rho_i, V)
+		rho_i = project(rho_i, V)
 		beam.write(rho_i, u, time = i)
 		stimulus.write(rho.sub(2), time = i)
 		# File(options.output + '/beam-{}.pvd'.format(i)).write(rho_i, u)
