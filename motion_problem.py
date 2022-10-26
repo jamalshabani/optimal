@@ -212,10 +212,6 @@ def FormObjectiveGradient(tao, x, G):
 	if (i%20) == 0:
 		rho_i.interpolate(rho.sub(1) - rho.sub(0))
 		beam.write(rho_i, u, time = i)
-		# stimulus.write(stimulus, time = i)
-		# File(options.output + '/beam-{}.pvd'.format(i)).write(rho_i, u)
-		# File(options.output + '/stimulus-{}.pvd'.format(i)).write(rho.sub(2))
-
 
 	with rho.dat.vec as rho_vec:
 		rho_vec.set(0.0)
