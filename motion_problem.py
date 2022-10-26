@@ -39,19 +39,17 @@ Id = Identity(mesh.geometric_dimension()) #Identity tensor
 # Define the function spaces
 V = FunctionSpace(mesh, 'CG', 1)
 VV = VectorFunctionSpace(mesh, 'CG', 1, dim = 2)
-VVV = VectorFunctionSpace(mesh, 'CG', 1, dim = 3)
 
 # Create initial design
 ###### Begin Initial Design #####
 mesh_coordinates = mesh.coordinates.dat.data[:]
 M = len(mesh_coordinates)
 
-rho =  Function(VVV, name = "Design variable")
+rho =  Function(VV, name = "Design variable")
 rho_i = Function(V, name = "Material density")
-stimulus =  Function(V, name = "Stimulus variable")
+s =  Function(V, name = "Stimulus variable")
 rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
 rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
-s = Function(V, name = "Stimulus factor sI")
 
 # Stimulus initial guess
 # s = Constant(options.steamy)
@@ -65,8 +63,8 @@ s = Constant(options.steamy)
 # rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
 # rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
 
-rho = as_vector([rho2, rho3, s])
-rho = interpolate(rho, VVV)
+rho = as_vector([rho2, rho3])
+rho = interpolate(rho, VV)
 # print
 
 rho_initial = Function(V)
@@ -132,9 +130,6 @@ def h_s(rho):
 def h_r(rho):
 	return pow(rho.sub(1), options.power_p)
 
-def h_h(rho):
-	return rho.sub(2)
-
 # Define W(x) function
 def W(rho):
 	return (rho.sub(0) + rho.sub(1)) * (1 - rho.sub(0)) * (1 - rho.sub(1))
@@ -186,7 +181,7 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward = inner(f, v) * ds(8) + h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(v)) * dx
+L_forward = inner(f, v) * ds(8) + h_r(rho) * s * inner(sigma_a(Id, Id), epsilon(v)) * dx
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -195,7 +190,7 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = inner(f, p) * ds(8) + h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(p)) * dx
+L_lagrange = inner(f, p) * ds(8) + h_r(rho) * s * inner(sigma_a(Id, Id), epsilon(p)) * dx
 R_lagrange = a_lagrange - L_lagrange
 L = JJ - R_lagrange
 
@@ -216,8 +211,7 @@ def FormObjectiveGradient(tao, x, G):
 	i = tao.getIterationNumber()
 	if (i%20) == 0:
 		rho_i.interpolate(rho.sub(1) - rho.sub(0))
-		stimulus.interpolate(rho.sub(2))
-		beam.write(rho_i, stimulus, u, time = i)
+		beam.write(rho_i, u, time = i)
 		# stimulus.write(stimulus, time = i)
 		# File(options.output + '/beam-{}.pvd'.format(i)).write(rho_i, u)
 		# File(options.output + '/stimulus-{}.pvd'.format(i)).write(rho.sub(2))
@@ -245,39 +239,31 @@ def FormObjectiveGradient(tao, x, G):
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
-	dJds = assemble(derivative(L, rho.sub(2)))
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
-	dJds_array = dJds.vector().array()
 
-	N = M * 3
+	N = M * 2
 	index_2 = []
 	index_3 = []
-	index_s = []
 
 	for i in range(N):
-		if (i%3) == 0:
+		if (i%2) == 0:
 			index_2.append(i)
-		if (i%3) == 1:
+		if (i%2) == 1:
 			index_3.append(i)
-		if (i%3) == 2:
-			index_s.append(i)
 
 	G.setValues(index_2, dJdrho2_array)
 	G.setValues(index_3, dJdrho3_array)
-	G.setValues(index_s, dJds_array)
-
-	# print(G.view())
 
 	f_val = assemble(L)
 	return f_val
 
 # Setting lower and upper bounds
-lb = as_vector((0, 0, -1))
-ub = as_vector((1, 1, 1))
-lb = interpolate(lb, VVV)
-ub = interpolate(ub, VVV)
+lb = as_vector((0, 0))
+ub = as_vector((1, 1))
+lb = interpolate(lb, VV)
+ub = interpolate(ub, VV)
 
 with lb.dat.vec as lb_vec:
 	rho_lb = lb_vec
