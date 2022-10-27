@@ -185,7 +185,7 @@ func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Responsive material 1
 func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
 # Objective function + Modica-Mortola functional + Volume constraint
-P = func1 + func2 + func3 + func4 + func5
+P = func1 + func2 + func3 + func4
 JJ = J + P
 
 # Define the weak form for forward PDE
@@ -282,7 +282,7 @@ def FormObjectiveGradient(tao, x, G):
 	return f_val
 
 # Setting lower and upper bounds
-lb = as_vector((0, 0, -1))
+lb = as_vector((0, 0, 0))
 ub = as_vector((1, 1, 1))
 lb = interpolate(lb, VVV)
 ub = interpolate(ub, VVV)
