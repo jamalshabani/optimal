@@ -59,8 +59,12 @@ s = Function(V, name = "Stimulus factor sI")
 # File(options.output + '/stimulus-initial.pvd').write(s_initial)
 
 x, y = SpatialCoordinate(mesh)
-rho2 = Constant(0.4)
-rho3 = Constant(0.5)
+rho2 = interpolate(Constant(0.4), V)
+rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
+
+rho3 = interpolate(Constant(0.5), V)
+rho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+
 s = Constant(options.steamy)
 # rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
 # rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
@@ -139,6 +143,9 @@ def h_h(rho):
 def W(rho):
 	return (rho.sub(0) + rho.sub(1)) * (1 - rho.sub(0)) * (1 - rho.sub(1))
 
+def Ws(rho):
+	return (rho.sub(2) * (1 - rho.sub(2)))
+
 # Define stress and strain tensors
 def epsilon(u):
 	return 0.5 * (grad(u) + grad(u).T)
@@ -166,18 +173,19 @@ bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
 J = 0.5 * inner(u - u_star, u - u_star) * dx(4)
-func1 = kappa_d_e * W(rho) * dx
+func1 = kappa_d_e * (W(rho) + Ws(rho)) * dx
 
 func2_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func2_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
+func2_sub4 = inner(grad(h_h(rho)), grad(h_h(rho))) * dx
 
-func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3)
+func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3 + func2_sub4)
 func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Responsive material 1(Blue)
 func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
 # Objective function + Modica-Mortola functional + Volume constraint
-P = func1 + func2 + func3 + func4
+P = func1 + func2 + func3 + func4 + func5
 JJ = J + P
 
 # Define the weak form for forward PDE

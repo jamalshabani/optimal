@@ -156,7 +156,6 @@ def sigma_r(u, Id):
 
 # Define test function and beam displacement
 v = TestFunction(VV)
-vdg = TestFunction(DG)
 u = Function(VV, name = "Displacement")
 p = Function(VV, name = "Adjoint variable")
 
