@@ -57,8 +57,11 @@ rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 # File(options.output + '/stimulus-initial.pvd').write(s_initial)
 
 x, y = SpatialCoordinate(mesh)
-rho2 = Constant(0.4)
-rho3 = Constant(0.5)
+rho2 = interpolate(Constant(0.4), V)
+rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
+
+rho3 = interpolate(Constant(0.5), V)
+rho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
 s = Constant(options.steamy)
 # rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
 # rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
@@ -153,6 +156,7 @@ def sigma_r(u, Id):
 
 # Define test function and beam displacement
 v = TestFunction(VV)
+vdg = TestFunction(DG)
 u = Function(VV, name = "Displacement")
 p = Function(VV, name = "Adjoint variable")
 
@@ -208,9 +212,15 @@ beam = File(options.output + '/beam.pvd')
 
 def FormObjectiveGradient(tao, x, G):
 
+	rho0 = interpolate(rho.sub(0), V)
+	# rho0.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
+
+	rho1 = interpolate(rho.sub(1), V)
+	# rho1.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+
 	i = tao.getIterationNumber()
 	if (i%20) == 0:
-		rho_i.interpolate(rho.sub(1) - rho.sub(0))
+		rho_i.interpolate(rho1 - rho0)
 		beam.write(rho_i, u, time = i)
 
 	with rho.dat.vec as rho_vec:
