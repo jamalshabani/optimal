@@ -33,7 +33,7 @@ import numpy as np
 start = time.time()
 
 # Import gmesh
-mesh = Mesh("motion_mesh.msh")
+mesh = Mesh(options.mesh)
 Id = Identity(mesh.geometric_dimension()) #Identity tensor
 
 # Define the function spaces
@@ -59,7 +59,7 @@ s = Function(V, name = "Stimulus factor sI")
 # File(options.output + '/stimulus-initial.pvd').write(s_initial)
 
 x, y = SpatialCoordinate(mesh)
-rho2 = interpolate(Constant(0.4), V)
+rho2 = interpolate(Constant(0.5), V)
 rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
 
 rho3 = interpolate(Constant(0.5), V)
@@ -252,7 +252,11 @@ def FormObjectiveGradient(tao, x, G):
 	print(" ")
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
+	dJdrho2.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
+	dJdrho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+
 	dJds = assemble(derivative(L, rho.sub(2)))
 
 	dJdrho2_array = dJdrho2.vector().array()
