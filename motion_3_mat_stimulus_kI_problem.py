@@ -96,6 +96,8 @@ alpha = Constant(options.alpha)
 epsilon = Constant(options.epsilon)
 kappa_d_e = Constant(kappa / (epsilon * cw))
 kappa_m_e = Constant(kappa * epsilon / cw)
+kappa_d_e_s = Constant(kappa * 10 / (epsilon * 2))
+kappa_m_e_s = Constant(kappa * 10 * epsilon / 2)
 
 f = Constant((0, -1.0))
 u_star = Constant((0, 1.0))
@@ -173,14 +175,14 @@ bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
 J = 0.5 * inner(u - u_star, u - u_star) * dx(4)
-func1 = kappa_d_e * (W(rho) + Ws(rho)) * dx
+func1 = kappa_d_e * W(rho) * dx + kappa_d_e_s * Ws(rho) * dx
 
 func2_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func2_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 func2_sub4 = inner(grad(h_h(rho)), grad(h_h(rho))) * dx
 
-func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3 + func2_sub4)
+func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3) + kappa_m_e_s * func2_sub4
 func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Responsive material 1(Blue)
 func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
