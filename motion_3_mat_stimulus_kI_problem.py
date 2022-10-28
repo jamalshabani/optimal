@@ -71,13 +71,6 @@ s = Constant(options.steamy)
 
 rho = as_vector([rho2, rho3, s])
 rho = interpolate(rho, VVV)
-# print
-
-rho_initial = Function(V)
-rho_initial =  rho3 - rho2
-rho_initial = interpolate(rho_initial, V)
-File(options.output + '/rho_initial.pvd').write(rho_initial)
-# Create initial design
 ###### End Initial Design #####
 
 # Define the constant parameters used in the problem
