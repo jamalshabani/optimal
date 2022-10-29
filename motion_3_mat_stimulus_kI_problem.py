@@ -63,7 +63,7 @@ x, y = SpatialCoordinate(mesh)
 rho2 = interpolate(Constant(0.5), V)
 rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
 
-rho3 = interpolate(Constant(0.5), V)
+rho3 = interpolate(Constant(0.4), V)
 rho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
 
 s = Constant(options.steamy)

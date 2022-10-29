@@ -20,6 +20,7 @@ def parse():
 	parser.add_argument('-p', '--power_p', type = float, default = 2.0, help = 'Power for elasticity interpolation')
 	parser.add_argument('-a', '--alpha', type = float, default = 1.0e-3, help = 'Step length for stimulus decent')
 	parser.add_argument('-s', '--steamy', type = float, default = 1.0, help = 'Initial factor of steamy')
+	parser.add_argument('-f', '--force', type = float, default = 0.0, help = 'y-component boundary force')
 	options = parser.parse_args()
 	return options
 
@@ -33,23 +34,25 @@ import numpy as np
 start = time.time()
 
 # Import gmesh
-mesh = Mesh("motion_mesh.msh")
+mesh = Mesh(options.mesh)
 Id = Identity(mesh.geometric_dimension()) #Identity tensor
 
 # Define the function spaces
 V = FunctionSpace(mesh, 'CG', 1)
 VV = VectorFunctionSpace(mesh, 'CG', 1, dim = 2)
+VVV = VectorFunctionSpace(mesh, 'CG', 1, dim = 3)
 
 # Create initial design
 ###### Begin Initial Design #####
 mesh_coordinates = mesh.coordinates.dat.data[:]
 M = len(mesh_coordinates)
 
-rho =  Function(VV, name = "Design variable")
+rho =  Function(VVV, name = "Design variable")
 rho_i = Function(V, name = "Material density")
-s =  Function(V, name = "Stimulus variable")
+stimulus =  Function(V, name = "Stimulus variable")
 rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
 rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
+s = Function(V, name = "Stimulus factor sI")
 
 # Stimulus initial guess
 # s = Constant(options.steamy)
@@ -57,24 +60,18 @@ rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 # File(options.output + '/stimulus-initial.pvd').write(s_initial)
 
 x, y = SpatialCoordinate(mesh)
-rho2 = interpolate(Constant(0.4), V)
+rho2 = interpolate(Constant(0.5), V)
 rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
 
-rho3 = interpolate(Constant(0.5), V)
+rho3 = interpolate(Constant(0.4), V)
 rho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+
 s = Constant(options.steamy)
 # rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
 # rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
 
-rho = as_vector([rho2, rho3])
-rho = interpolate(rho, VV)
-# print
-
-rho_initial = Function(V)
-rho_initial =  rho3 - rho2
-rho_initial = interpolate(rho_initial, V)
-File(options.output + '/rho_initial.pvd').write(rho_initial)
-# Create initial design
+rho = as_vector([rho2, rho3, s])
+rho = interpolate(rho, VVV)
 ###### End Initial Design #####
 
 # Define the constant parameters used in the problem
@@ -93,8 +90,9 @@ alpha = Constant(options.alpha)
 epsilon = Constant(options.epsilon)
 kappa_d_e = Constant(kappa / (epsilon * cw))
 kappa_m_e = Constant(kappa * epsilon / cw)
+kappa_d_e_s = Constant(kappa * 10 / (epsilon * 2))
+kappa_m_e_s = Constant(kappa * 10 * epsilon / 2)
 
-f = Constant((0, -1.0))
 u_star = Constant((0, 1.0))
 
 # Young's modulus of the beam and poisson ratio
@@ -133,9 +131,15 @@ def h_s(rho):
 def h_r(rho):
 	return pow(rho.sub(1), options.power_p)
 
+def h_h(rho):
+	return rho.sub(2)
+
 # Define W(x) function
 def W(rho):
 	return (rho.sub(0) + rho.sub(1)) * (1 - rho.sub(0)) * (1 - rho.sub(1))
+
+def Ws(rho):
+	return (rho.sub(2) * (1 - rho.sub(2)))
 
 # Define stress and strain tensors
 def epsilon(u):
@@ -164,13 +168,14 @@ bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
 J = 0.5 * inner(u - u_star, u - u_star) * dx(4)
-func1 = kappa_d_e * W(rho) * dx
+func1 = kappa_d_e * W(rho) * dx + kappa_d_e_s * Ws(rho) * dx
 
 func2_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func2_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
+func2_sub4 = inner(grad(h_h(rho)), grad(h_h(rho))) * dx
 
-func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3)
+func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3) + kappa_m_e_s * func2_sub4
 func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Responsive material 1(Blue)
 func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
@@ -184,7 +189,7 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward = inner(f, v) * ds(8) + h_r(rho) * s * inner(sigma_a(Id, Id), epsilon(v)) * dx
+L_forward = h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(v)) * dx
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -193,7 +198,7 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = inner(f, p) * ds(8) + h_r(rho) * s * inner(sigma_a(Id, Id), epsilon(p)) * dx
+L_lagrange = h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(p)) * dx
 R_lagrange = a_lagrange - L_lagrange
 L = JJ - R_lagrange
 
@@ -211,16 +216,15 @@ beam = File(options.output + '/beam.pvd')
 
 def FormObjectiveGradient(tao, x, G):
 
-	rho0 = interpolate(rho.sub(0), V)
-	# rho0.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
-
-	rho1 = interpolate(rho.sub(1), V)
-	# rho1.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
-
 	i = tao.getIterationNumber()
 	if (i%20) == 0:
-		rho_i.interpolate(rho1 - rho0)
-		beam.write(rho_i, u, time = i)
+		rho_i.interpolate(rho.sub(1) - rho.sub(0))
+		stimulus.interpolate(rho.sub(2))
+		beam.write(rho_i, stimulus, u, time = i)
+		# stimulus.write(stimulus, time = i)
+		# File(options.output + '/beam-{}.pvd'.format(i)).write(rho_i, u)
+		# File(options.output + '/stimulus-{}.pvd'.format(i)).write(rho.sub(2))
+
 
 	with rho.dat.vec as rho_vec:
 		rho_vec.set(0.0)
@@ -243,32 +247,44 @@ def FormObjectiveGradient(tao, x, G):
 	print(" ")
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
+	dJdrho2.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
+	dJdrho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+
+	dJds = assemble(derivative(L, rho.sub(2)))
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
+	dJds_array = dJds.vector().array()
 
-	N = M * 2
+	N = M * 3
 	index_2 = []
 	index_3 = []
+	index_s = []
 
 	for i in range(N):
-		if (i%2) == 0:
+		if (i%3) == 0:
 			index_2.append(i)
-		if (i%2) == 1:
+		if (i%3) == 1:
 			index_3.append(i)
+		if (i%3) == 2:
+			index_s.append(i)
 
 	G.setValues(index_2, dJdrho2_array)
 	G.setValues(index_3, dJdrho3_array)
+	G.setValues(index_s, dJds_array)
+
+	# print(G.view())
 
 	f_val = assemble(L)
 	return f_val
 
 # Setting lower and upper bounds
-lb = as_vector((0, 0))
-ub = as_vector((1, 1))
-lb = interpolate(lb, VV)
-ub = interpolate(ub, VV)
+lb = as_vector((0, 0, 0))
+ub = as_vector((1, 1, 1))
+lb = interpolate(lb, VVV)
+ub = interpolate(ub, VVV)
 
 with lb.dat.vec as lb_vec:
 	rho_lb = lb_vec
