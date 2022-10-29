@@ -20,6 +20,7 @@ def parse():
 	parser.add_argument('-p', '--power_p', type = float, default = 2.0, help = 'Power for elasticity interpolation')
 	parser.add_argument('-a', '--alpha', type = float, default = 1.0e-3, help = 'Step length for stimulus decent')
 	parser.add_argument('-s', '--steamy', type = float, default = 1.0, help = 'Initial factor of steamy')
+	parser.add_argument('-f', '--force', type = float, default = 0.0, help = 'y-component boundary force')
 	options = parser.parse_args()
 	return options
 
@@ -92,7 +93,7 @@ kappa_m_e = Constant(kappa * epsilon / cw)
 kappa_d_e_s = Constant(kappa * 10 / (epsilon * 2))
 kappa_m_e_s = Constant(kappa * 10 * epsilon / 2)
 
-f = Constant((0, -1.0))
+f = Constant((0, options.force))
 u_star = Constant((0, 1.0))
 
 # Young's modulus of the beam and poisson ratio
