@@ -60,7 +60,7 @@ s = Function(V, name = "Stimulus factor sI")
 # File(options.output + '/stimulus-initial.pvd').write(s_initial)
 
 x, y = SpatialCoordinate(mesh)
-rho2 = interpolate(Constant(0.5), V)
+rho2 = interpolate(Constant(0.4), V)
 rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
 
 rho3 = interpolate(Constant(0.4), V)
@@ -168,14 +168,14 @@ bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
 J = 0.5 * inner(u - u_star, u - u_star) * dx(4)
-func1 = kappa_d_e * W(rho) * dx + kappa_d_e_s * Ws(rho) * dx
+func1 = kappa_d_e * W(rho) * dx
 
 func2_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func2_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
 func2_sub4 = inner(grad(h_h(rho)), grad(h_h(rho))) * dx
 
-func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3) + kappa_m_e_s * func2_sub4
+func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3)
 func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Responsive material 1(Blue)
 func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
@@ -281,8 +281,8 @@ def FormObjectiveGradient(tao, x, G):
 	return f_val
 
 # Setting lower and upper bounds
-lb = as_vector((0, 0, 0))
-ub = as_vector((1, 1, 1))
+lb = as_vector((0, 0, -1e100))
+ub = as_vector((1, 1, 1e100))
 lb = interpolate(lb, VVV)
 ub = interpolate(ub, VVV)
 
