@@ -54,17 +54,14 @@ rho2 = Function(V, name = "Structural material")  # Structural material 1(Blue)
 rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 s = Function(V, name = "Stimulus factor sI")
 
-# Stimulus initial guess
-# s = Constant(options.steamy)
-# s_initial = project(s, V)
-# File(options.output + '/stimulus-initial.pvd').write(s_initial)
+# Initial design and stimulus initial guess
 
 x, y = SpatialCoordinate(mesh)
 rho2 = interpolate(Constant(0.5), V)
-# rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
+rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
 
 rho3 = interpolate(Constant(0.4), V)
-# rho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+rho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
 
 s = Constant(options.steamy)
 # rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
@@ -219,10 +216,6 @@ def FormObjectiveGradient(tao, x, G):
 		rho_i.interpolate(rho.sub(1) - rho.sub(0))
 		stimulus.interpolate(rho.sub(2))
 		beam.write(rho_i, stimulus, u, time = i)
-		# stimulus.write(stimulus, time = i)
-		# File(options.output + '/beam-{}.pvd'.format(i)).write(rho_i, u)
-		# File(options.output + '/stimulus-{}.pvd'.format(i)).write(rho.sub(2))
-
 
 	with rho.dat.vec as rho_vec:
 		rho_vec.set(0.0)
@@ -245,10 +238,10 @@ def FormObjectiveGradient(tao, x, G):
 	print(" ")
 
 	dJdrho2 = assemble(derivative(L, rho.sub(0)))
-	# dJdrho2.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+	dJdrho2.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
 
 	dJdrho3 = assemble(derivative(L, rho.sub(1)))
-	# dJdrho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+	dJdrho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
 
 	dJds = assemble(derivative(L, rho.sub(2)))
 
