@@ -166,7 +166,7 @@ bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
 J = 0.5 * inner(u - u_star, u - u_star) * dx(4)
-func1 = kappa_d_e * (W(rho) +  Ws(s)) * dx
+func1 = kappa_d_e * (W(rho) +  Ws(rho)) * dx
 
 func2_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
@@ -279,8 +279,8 @@ def FormObjectiveGradient(tao, x, G):
 	return f_val
 
 # Setting lower and upper bounds
-lb = as_vector((0, 0, -1e100))
-ub = as_vector((1, 1, 1e100))
+lb = as_vector((0, 0, 0))
+ub = as_vector((1, 1, 1))
 lb = interpolate(lb, VVV)
 ub = interpolate(ub, VVV)
 

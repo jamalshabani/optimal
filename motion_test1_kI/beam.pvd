@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<VTKFile type="Collection" version="0.1" byte_order="LittleEndian">
+<Collection>
+<DataSet timestep="0" file="beam_0.vtu" />
+<DataSet timestep="0" file="beam_1.vtu" />
+<DataSet timestep="0" file="beam_2.vtu" />
+<DataSet timestep="0" file="beam_3.vtu" />
+<DataSet timestep="0" file="beam_4.vtu" />
+<DataSet timestep="10" file="beam_5.vtu" />
+<DataSet timestep="20" file="beam_6.vtu" />
+<DataSet timestep="30" file="beam_7.vtu" />
+<DataSet timestep="40" file="beam_8.vtu" />
+<DataSet timestep="40" file="beam_9.vtu" />
+<DataSet timestep="40" file="beam_10.vtu" />
+</Collection>
+</VTKFile>
