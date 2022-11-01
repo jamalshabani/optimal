@@ -18,9 +18,7 @@ def parse():
 	parser.add_argument('-es', '--esmodulus', type = float, default = 0.1, help = 'Elastic Modulus for structural material')
 	parser.add_argument('-er', '--ermodulus', type = float, default = 1.0, help = 'Elastic Modulus for responsive material')
 	parser.add_argument('-p', '--power_p', type = float, default = 2.0, help = 'Power for elasticity interpolation')
-	parser.add_argument('-a', '--alpha', type = float, default = 1.0e-3, help = 'Step length for stimulus decent')
 	parser.add_argument('-s', '--steamy', type = float, default = 1.0, help = 'Initial factor of steamy')
-	parser.add_argument('-f', '--force', type = float, default = 0.0, help = 'y-component boundary force')
 	options = parser.parse_args()
 	return options
 
@@ -29,7 +27,6 @@ options = parse()
 from firedrake import *
 from petsc4py import PETSc
 import time
-import numpy as np
 
 start = time.time()
 
