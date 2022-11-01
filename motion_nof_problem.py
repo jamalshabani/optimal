@@ -272,8 +272,8 @@ def FormObjectiveGradient(tao, x, G):
 	return f_val
 
 # Setting lower and upper bounds
-lb = as_vector((0, 0, -1e10))
-ub = as_vector((1, 1, 1e10))
+lb = as_vector((0, 0, -1))
+ub = as_vector((1, 1, 1))
 lb = interpolate(lb, VVV)
 ub = interpolate(ub, VVV)
 

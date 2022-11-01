@@ -3,9 +3,9 @@ import subprocess
 
 # Ratio Er/Es = 10.0
 program_list = ["rm -rf motion_nof1", "rm -rf motion_nof2", "rm -rf motion_nof3",
-                "python3 motion_nof_problem.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -lr 0.19 -ls 0.1 -m 'motion_nof_mesh1.msh' -o 'motion_nof1' -er 1.0 -es 1.0e-2 -k 1.7e-3 -e 4.0e-3 -p 2.0 -s 0.5",
-                "python3 motion_nof_problem.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -lr 0.19 -ls 0.2 -m 'motion_nof_mesh1.msh' -o 'motion_nof2' -er 1.0 -es 1.0e-2 -k 1.7e-3 -e 4.0e-3 -p 2.0 -s 0.5",
-                "python3 motion_nof_problem.py -tao_type blmvm -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -lr 0.19 -ls 0.3 -m 'motion_nof_mesh1.msh' -o 'motion_nof3' -er 1.0 -es 1.0e-2 -k 1.7e-3 -e 4.0e-3 -p 2.0 -s 0.5"]
+                "python3 motion_nof_problem.py -tao_type bqnls -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -lr 0.19 -ls 0.1 -m 'motion_nof_mesh1.msh' -o 'motion_nof1' -er 1.0 -es 1.0e-2 -k 1.7e-3 -e 4.0e-3 -p 2.0 -s 0.5",
+                "python3 motion_nof_problem.py -tao_type bqnls -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -lr 0.19 -ls 0.2 -m 'motion_nof_mesh1.msh' -o 'motion_nof2' -er 1.0 -es 1.0e-2 -k 1.7e-3 -e 4.0e-3 -p 2.0 -s 0.5",
+                "python3 motion_nof_problem.py -tao_type bqnls -tao_monitor -tao_max_it 2000 -tao_gatol 1e-7 -lr 0.19 -ls 0.3 -m 'motion_nof_mesh1.msh' -o 'motion_nof3' -er 1.0 -es 1.0e-2 -k 1.7e-3 -e 4.0e-3 -p 2.0 -s 0.5"]
 
 
 i = 1
