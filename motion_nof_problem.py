@@ -130,13 +130,12 @@ def h_h(rho):
 def W(rho):
 	return (rho.sub(0) + rho.sub(1)) * (1 - rho.sub(0)) * (1 - rho.sub(1))
 
-def Ws(rho):
-	return (rho.sub(2) * (1 - rho.sub(2)))
+# def Ws(rho):
+# 	return (rho.sub(2) * (1 - rho.sub(2)))
 
 # Define stress and strain tensors
 def epsilon(u):
 	return 0.5 * (grad(u) + grad(u).T)
-
 
 def sigma_a(A, Id):
 	return lambda_r * tr(A) * Id + 2 * mu_r * A
@@ -160,14 +159,14 @@ bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
 J = 0.5 * inner(u - u_star, u - u_star) * dx(4)
-func1 = kappa_d_e * (W(rho) +  Ws(rho)) * dx
+func1 = kappa_d_e * W(rho) * dx
 
 func2_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func2_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
-func2_sub4 = inner(grad(h_h(rho)), grad(h_h(rho))) * dx
+# func2_sub4 = inner(grad(h_h(rho)), grad(h_h(rho))) * dx
 
-func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3 + func2_sub4)
+func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3)
 func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Responsive material 1(Blue)
 func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
@@ -181,7 +180,7 @@ a_forward_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(v)) * dx
 a_forward_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(v)) * dx
 a_forward = a_forward_v + a_forward_s + a_forward_r
 
-L_forward = h_r(rho)  * inner(sigma_a(h_h(rho) * Id, Id), epsilon(v)) * dx
+L_forward = h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(v)) * dx
 R_fwd = a_forward - L_forward
 
 # Define the Lagrangian
@@ -190,9 +189,9 @@ a_lagrange_s = h_s(rho) * inner(sigma_s(u, Id), epsilon(p)) * dx
 a_lagrange_r = h_r(rho) * inner(sigma_r(u, Id), epsilon(p)) * dx
 a_lagrange   = a_lagrange_v + a_lagrange_s + a_lagrange_r
 
-L_lagrange = h_r(rho) * inner(sigma_a(h_h(rho) * Id, Id), epsilon(p)) * dx
+L_lagrange = h_r(rho) * h_h(rho) * inner(sigma_a(Id, Id), epsilon(p)) * dx
 R_lagrange = a_lagrange - L_lagrange
-L = JJ - R_lagrange
+L = JJ + R_lagrange
 
 
 # Define the weak form for adjoint PDE
@@ -202,7 +201,7 @@ a_adjoint_r = h_r(rho) * inner(sigma_r(v, Id), epsilon(p)) * dx
 a_adjoint = a_adjoint_v + a_adjoint_s + a_adjoint_r
 
 L_adjoint = inner(u - u_star, v) * dx(4)
-R_adj = a_adjoint - L_adjoint
+R_adj = a_adjoint + L_adjoint
 
 beam = File(options.output + '/beam.pvd')
 
@@ -219,10 +218,10 @@ def FormObjectiveGradient(tao, x, G):
 		rho_vec.axpy(1.0, x)
 
 	# Solve forward PDE
-	solve(R_fwd == 0, u, bcs = bcs, solver_parameters={'snes_max_it': 500})
+	solve(R_fwd == 0, u, bcs = bcs)
 
 	# Solve adjoint PDE
-	solve(R_adj == 0, p, bcs = bcs, solver_parameters={'snes_max_it': 500})
+	solve(R_adj == 0, p, bcs = bcs)
 
 	objective_value = assemble(J)
 	print("The value of objective function is {}".format(objective_value))
