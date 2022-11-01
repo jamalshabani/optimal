@@ -12,7 +12,7 @@ def parse():
 	parser.add_argument('-vs', '--volume_s', type = float, default = 0.4, help = 'Volume percentage for structural material')
 	parser.add_argument('-vr', '--volume_r', type = float, default = 0.3, help = 'Volume percentage for responsive material')
 	parser.add_argument('-k', '--kappa', type = float, default = 1.0e-2, help = 'Weight of Modica-Mortola')
-	parser.add_argument('-e', '--epsilon', type = float, default = 5.0e-3, help = 'Phase-field regularization parameter')
+	parser.add_argument('-e', '--epsilon', type = float, default = 4.0e-4, help = 'Phase-field regularization parameter')
 	parser.add_argument('-o', '--output', type = str, default = 'output1', help = 'Output folder')
 	parser.add_argument('-m', '--mesh', type = str, default = 'main.msh', help = 'Dimensions of meshed beam')
 	parser.add_argument('-es', '--esmodulus', type = float, default = 0.1, help = 'Elastic Modulus for structural material')
@@ -53,7 +53,7 @@ s = Function(V, name = "Stimulus factor sI")
 
 # Initial design and stimulus initial guess
 x, y = SpatialCoordinate(mesh)
-rho2 = interpolate(Constant(0.5), V)
+rho2 = interpolate(Constant(0.4), V)
 rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
 
 rho3 = interpolate(Constant(0.4), V)
@@ -129,8 +129,8 @@ def h_h(rho):
 def W(rho):
 	return (rho.sub(0) + rho.sub(1)) * (1 - rho.sub(0)) * (1 - rho.sub(1))
 
-# def Ws(rho):
-# 	return (rho.sub(2) * (1 - rho.sub(2)))
+def Ws(rho):
+	return (rho.sub(2) * (1 - rho.sub(2)))
 
 # Define stress and strain tensors
 def epsilon(u):
@@ -158,14 +158,14 @@ bcs = DirichletBC(VV, Constant((0, 0)), 7)
 
 # Define the objective function
 J = 0.5 * inner(u - u_star, u - u_star) * dx(4)
-func1 = kappa_d_e * W(rho) * dx
+func1 = kappa_d_e * (W(rho) + Ws(rho)) * dx
 
 func2_sub1 = inner(grad(v_v(rho)), grad(v_v(rho))) * dx
 func2_sub2 = inner(grad(v_s(rho)), grad(v_s(rho))) * dx
 func2_sub3 = inner(grad(v_r(rho)), grad(v_r(rho))) * dx
-# func2_sub4 = inner(grad(h_h(rho)), grad(h_h(rho))) * dx
+func2_sub4 = inner(grad(h_h(rho)), grad(h_h(rho))) * dx
 
-func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3)
+func2 = kappa_m_e * (func2_sub1 + func2_sub2 + func2_sub3 + func2_sub4)
 func3 = lagrange_s * (v_s(rho) - volume_s * omega) * dx  # Responsive material 1(Blue)
 func4 = lagrange_r * (v_r(rho) - volume_r * omega) * dx  # Responsive material 2(Red)
 
@@ -263,7 +263,7 @@ def FormObjectiveGradient(tao, x, G):
 
 	# print(G.view())
 
-	f_val = assemble(L)
+	f_val = assemble(JJ)
 	return f_val
 
 # Setting lower and upper bounds
