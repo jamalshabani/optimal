@@ -52,7 +52,6 @@ rho3 = Function(V, name = "Responsive material")  # Responsive material 2(Red)
 s = Function(V, name = "Stimulus factor sI")
 
 # Initial design and stimulus initial guess
-
 x, y = SpatialCoordinate(mesh)
 rho2 = interpolate(Constant(0.5), V)
 rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
@@ -61,8 +60,7 @@ rho3 = interpolate(Constant(0.4), V)
 rho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
 
 s = Constant(options.steamy)
-# rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
-# rho3 = 0.50 + 0.50 * sin(4*pi*x) * sin(8*pi*y)
+
 
 rho = as_vector([rho2, rho3, s])
 rho = interpolate(rho, VVV)
@@ -85,6 +83,7 @@ epsilon = Constant(options.epsilon)
 kappa_d_e = Constant(kappa / (epsilon * cw))
 kappa_m_e = Constant(kappa * epsilon / cw)
 
+# Target displacement for Omega_0
 u_star = Constant((0, 1.0))
 
 # Young's modulus of the beam and poisson ratio
@@ -123,6 +122,7 @@ def h_s(rho):
 def h_r(rho):
 	return pow(rho.sub(1), options.power_p)
 
+# Retrieve the stimulus
 def h_h(rho):
 	return rho.sub(2)
 
