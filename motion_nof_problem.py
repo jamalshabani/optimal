@@ -78,7 +78,6 @@ volume_r = Constant(options.lagrange_r)
 omega = assemble(interpolate(Constant(1.0), V) * dx)
 
 delta = Constant(1.0e-3)
-alpha = Constant(options.alpha)
 epsilon = Constant(options.epsilon)
 kappa_d_e = Constant(kappa / (epsilon * cw))
 kappa_m_e = Constant(kappa * epsilon / cw)
