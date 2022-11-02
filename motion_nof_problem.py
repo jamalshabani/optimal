@@ -242,7 +242,8 @@ def FormObjectiveGradient(tao, x, G):
 
 	dJdrho2_array = dJdrho2.vector().array()
 	dJdrho3_array = dJdrho3.vector().array()
-	dJds_array = dJds.vector().array()
+	# dJds_array = dJds.vector().array()
+	dJds_array = Constant(0.0)
 
 	N = M * 3
 	index_2 = []
