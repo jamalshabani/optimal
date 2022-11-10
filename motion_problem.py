@@ -61,10 +61,10 @@ s = Function(V, name = "Stimulus factor sI")
 
 x, y = SpatialCoordinate(mesh)
 rho2 = interpolate(Constant(0.5), V)
-# rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
+rho2.interpolate(Constant(1.0), mesh.measure_set("cell", 4))
 
 rho3 = interpolate(Constant(0.4), V)
-# rho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+rho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
 
 s = Constant(options.steamy)
 # rho2 = 0.75 + 0.75 * sin(4*pi*x) * sin(8*pi*y)
@@ -211,6 +211,8 @@ L_adjoint = inner(u - u_star, v) * dx(4)
 R_adj = a_adjoint - L_adjoint
 
 beam = File(options.output + '/beam.pvd')
+dJdrho2 = Function(V)
+dJdrho3 = Function(V)
 
 def FormObjectiveGradient(tao, x, G):
 
@@ -244,11 +246,11 @@ def FormObjectiveGradient(tao, x, G):
 	print("The volume fraction(Vr) is {}".format(volume_r))
 	print(" ")
 
-	dJdrho2 = assemble(derivative(L, rho.sub(0)))
-	# dJdrho2.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+	dJdrho2.interpolate(assemble(derivative(L, rho.sub(0))))
+	dJdrho2.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
 
-	dJdrho3 = assemble(derivative(L, rho.sub(1)))
-	# dJdrho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
+	dJdrho3.interpolate(assemble(derivative(L, rho.sub(1))))
+	dJdrho3.interpolate(Constant(0.0), mesh.measure_set("cell", 4))
 
 	dJds = assemble(derivative(L, rho.sub(2)))
 
