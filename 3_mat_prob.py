@@ -96,8 +96,8 @@ rho3 = Function(V)  # Responsive materials
 #rho2.dat.data[:] = rho2_array
 rho3.dat.data[:] = rho3_array
 
-rho2 = Constant(0.0)
-# rho3 = Constant(0.4)
+rho2 = Constant(0.4)
+rho3 = Constant(0.4)
 
 rho = as_vector([rho2, rho3])
 rho = interpolate(rho, VV)
@@ -215,15 +215,14 @@ L_lagrange = inner(f, u) * ds(8)
 R_lagrange = a_lagrange - L_lagrange
 L = J - R_lagrange
 
-
+beam = File(options.output + '/beam.pvd')
+rho_i = Function(V)
 def FormObjectiveGradient(tao, x, G):
 
 	i = tao.getIterationNumber()
 	if (i%10) == 0:
-		rho_i = Function(V)
-		rho_i = rho.sub(1) - rho.sub(0)
-		rho_i = interpolate(rho_i, V)
-		File(options.output + '/rho-{}.pvd'.format(i)).write(rho_i)
+		rho_i.interpolate(rho.sub(1) - rho.sub(0))
+		beam.write(rho_i, u, time = i)
 
 	with rho.dat.vec as rho_vec:
 		rho_vec.set(0.0)
@@ -234,6 +233,7 @@ def FormObjectiveGradient(tao, x, G):
 
 	volume = assemble(rho.sub(1) * dx) * 3
 	print("The volume fraction(Vr) is {}".format(volume))
+	print("")
 
 	# Solve forward PDE
 	solve(R_fwd == 0, u, bcs = bcs)
@@ -257,7 +257,7 @@ def FormObjectiveGradient(tao, x, G):
 	G.setValues(index_2, dJdrho2_array)
 	G.setValues(index_3, dJdrho3_array)
 
-	print(G.view())
+	# print(G.view())
 
 	f_val = assemble(L)
 	return f_val
